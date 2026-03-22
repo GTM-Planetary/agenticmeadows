@@ -1,0 +1,102 @@
+# AgenticMeadows — NemoClaw OpenShell Security Policy
+# This policy locks the AI agent inside a sandbox where it can ONLY
+# access approved endpoints. All other network access is denied.
+#
+# The AI agent needs:
+#   1. Backend API (backend:4000) — to query/create clients, jobs, quotes, etc.
+#   2. Ollama (ollama:11434) — local LLM inference
+#   3. NVIDIA API (api.nvidia.com) — optional cloud inference
+#   4. Open-Meteo (api.open-meteo.com) — weather forecasts (free, no key)
+#
+# Everything else is BLOCKED at the kernel level via Landlock + seccomp.
+
+version: "1.0"
+name: agenticmeadows-agent
+description: "Security policy for AgenticMeadows autonomous landscaping agent"
+
+# ── Network Policy ────────────────────────────────────────────────────────
+network:
+  default: deny
+
+  allow:
+    # AgenticMeadows Backend API — the agent's only data source
+    - host: backend
+      port: 4000
+      protocol: http
+      description: "AgenticMeadows backend API — clients, jobs, quotes, invoices, services"
+
+    # Ollama — local LLM inference (Qwen 3.5)
+    - host: ollama
+      port: 11434
+      protocol: http
+      description: "Ollama local LLM inference"
+
+    # NVIDIA Nemotron — cloud LLM inference (optional, requires API key)
+    - host: api.nvidia.com
+      port: 443
+      protocol: https
+      description: "NVIDIA Nemotron cloud inference (optional)"
+
+    - host: integrate.api.nvidia.com
+      port: 443
+      protocol: https
+      description: "NVIDIA inference integration endpoint"
+
+    # Open-Meteo — free weather API (no API key needed)
+    - host: api.open-meteo.com
+      port: 443
+      protocol: https
+      description: "Weather forecast data"
+
+    - host: geocoding-api.open-meteo.com
+      port: 443
+      protocol: https
+      description: "Geocoding for weather lookups"
+
+# ── Filesystem Policy ─────────────────────────────────────────────────────
+filesystem:
+  writable:
+    - /sandbox          # Agent workspace
+    - /tmp              # Temporary files
+    - /app/photos       # Shared photo volume (for vision analysis)
+
+  readonly:
+    - /sandbox/ai-service/main.py        # Agent code is read-only
+    - /sandbox/ai-service/tools/         # Tool modules are read-only
+    - /sandbox/ai-service/guardrails/    # Config is read-only
+    - /sandbox/policies/                  # Policies themselves are read-only
+
+# ── Process Policy ────────────────────────────────────────────────────────
+process:
+  allow_privilege_escalation: false
+  allow_exec: false
+  max_memory_mb: 2048
+  max_cpu_percent: 80
+
+# ── Inference Policy ──────────────────────────────────────────────────────
+inference:
+  default_provider: local
+
+  providers:
+    local:
+      type: ollama
+      endpoint: "http://ollama:11434"
+      model: "auto"
+
+    cloud:
+      type: nvidia
+      endpoint: "https://integrate.api.nvidia.com/v1"
+      model: "nvidia/nemotron-3-super-120b-a12b"
+      require_api_key: true
+      fallback: local
+
+  routing:
+    strategy: "cloud_with_local_fallback"
+    # If cloud fails or API key missing, use local transparently
+
+# ── Audit Policy ──────────────────────────────────────────────────────────
+audit:
+  log_all_network_requests: true
+  log_inference_calls: true
+  log_policy_violations: true
+  log_file: /sandbox/nemoclaw-audit.log

@@ -1,0 +1,193 @@
+version: "3.9"
+
+# AgenticMeadows — Local-first agentic landscaping platform
+# Single command: docker-compose up
+# Ports: frontend=3001, backend=4000, ai-service=8000, postgres=5433, ollama=11435
+
+volumes:
+  pg_data:
+  ollama_models:
+  photos_volume:
+
+networks:
+  am_net:
+    driver: bridge
+
+services:
+  # ─────────────────────────────────────────────────────────────
+  # PostgreSQL 16
+  # ─────────────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: am_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-turf}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-turf_local}
+      POSTGRES_DB: ${DB_NAME:-turfmindai}
+    ports:
+      - "5433:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - am_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-turf} -d ${DB_NAME:-turfmindai}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ─────────────────────────────────────────────────────────────
+  # Ollama — Local LLM server (Qwen 3.5)
+  # ─────────────────────────────────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    container_name: am_ollama
+    restart: unless-stopped
+    ports:
+      - "11435:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+      - photos_volume:/app/photos
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+    networks:
+      - am_net
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list > /dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+  # ─────────────────────────────────────────────────────────────
+  # Ollama Init — Detects RAM, pulls correct qwen3.5 size
+  # Writes selected model name to /app/photos/current_model.txt
+  # (shared with ai-service via photos_volume)
+  # ─────────────────────────────────────────────────────────────
+  ollama-init:
+    image: curlimages/curl:latest
+    container_name: am_ollama_init
+    user: root
+    restart: "no"
+    depends_on:
+      ollama:
+        condition: service_healthy
+    volumes:
+      - photos_volume:/app/photos
+    networks:
+      - am_net
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        echo "Detecting available RAM..."
+        MEM_KB=$$(awk '/MemTotal/{print $$2}' /proc/meminfo 2>/dev/null || echo 4000000)
+        if [ "$$MEM_KB" -ge 33554432 ]; then
+          MODEL="qwen3.5:27b"
+        elif [ "$$MEM_KB" -ge 16777216 ]; then
+          MODEL="qwen3.5:9b"
+        elif [ "$$MEM_KB" -ge 8388608 ]; then
+          MODEL="qwen3.5:4b"
+        elif [ "$$MEM_KB" -ge 4194304 ]; then
+          MODEL="qwen3.5:2b"
+        else
+          MODEL="qwen3.5:0.8b"
+        fi
+        MEM_GB=$$((MEM_KB / 1048576))
+        echo "Detected ~$${MEM_GB}GB RAM. Selecting model: $$MODEL"
+        curl -s -X POST http://ollama:11434/api/pull \
+          -H "Content-Type: application/json" \
+          -d "{\"name\":\"$$MODEL\"}" | tail -1
+        echo ""
+        echo "$$MODEL" > /app/photos/current_model.txt
+        echo "Model saved to /app/photos/current_model.txt"
+
+  # ─────────────────────────────────────────────────────────────
+  # Backend — Node.js + Express + Prisma
+  # ─────────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: am_backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-turf}:${DB_PASSWORD:-turf_local}@db:5432/${DB_NAME:-turfmindai}
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production-min-32-chars!!}
+      PORT: 4000
+      PHOTOS_DIR: /app/photos
+      NODE_ENV: ${NODE_ENV:-development}
+    ports:
+      - "4000:4000"
+    volumes:
+      - photos_volume:/app/photos
+      - ./backend/src:/app/src:ro  # live reload in dev
+    networks:
+      - am_net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:4000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  # ─────────────────────────────────────────────────────────────
+  # NemoClaw — Sandboxed AI Agent (OpenShell + FastAPI + Qwen 3.5)
+  # Replaces standalone ai-service with NemoClaw security sandbox.
+  # Network policy: ONLY allows backend:4000, ollama:11434, NVIDIA API
+  # ─────────────────────────────────────────────────────────────
+  ai-service:
+    build:
+      context: .
+      dockerfile: nemoclaw/Dockerfile
+    container_name: am_nemoclaw
+    privileged: true  # Required for OpenShell kernel-level sandboxing
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_URL: http://ollama:11434
+      BACKEND_URL: http://backend:4000
+      PHOTOS_DIR: /app/photos
+      PORT: 8000
+      NVIDIA_API_KEY: ${NVIDIA_API_KEY:-}
+    ports:
+      - "8000:8000"
+    volumes:
+      - photos_volume:/app/photos
+      - /var/run/docker.sock:/var/run/docker.sock  # NemoClaw needs Docker socket for sandbox management
+    networks:
+      - am_net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:8000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
+  # ─────────────────────────────────────────────────────────────
+  # Frontend — React + Vite + TailwindCSS (served via Nginx)
+  # ─────────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: am_frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+      ai-service:
+        condition: service_healthy
+    ports:
+      - "3001:80"
+    networks:
+      - am_net

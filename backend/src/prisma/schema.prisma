@@ -1,0 +1,687 @@
+// AgenticMeadows Prisma Schema
+// Database: PostgreSQL 16
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────
+
+enum UserRole {
+  ADMIN
+  TECHNICIAN
+  VIEWER
+}
+
+enum JobStatus {
+  PENDING
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum PhotoType {
+  BEFORE
+  AFTER
+  MAPPING_IDEA
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  APPROVED
+  REJECTED
+  INVOICED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  VOID
+}
+
+// ── Phase 1 Enums ────────────────────────────
+
+enum ServiceCategory {
+  MOWING
+  TRIMMING
+  FERTILIZATION
+  WEED_CONTROL
+  AERATION
+  SEEDING
+  MULCHING
+  PRUNING
+  IRRIGATION
+  CLEANUP
+  HARDSCAPE
+  PLANTING
+  SNOW_REMOVAL
+  OTHER
+}
+
+enum PricingUnit {
+  FLAT
+  PER_SQFT
+  PER_LINEAR_FT
+  PER_HOUR
+  PER_APPLICATION
+  PER_YARD
+}
+
+enum Season {
+  SPRING
+  SUMMER
+  FALL
+  WINTER
+  ALL_YEAR
+}
+
+enum RecurrenceFrequency {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  QUARTERLY
+  SEASONAL
+  ANNUAL
+}
+
+enum AgentActionStatus {
+  PROPOSED
+  CONFIRMED
+  REJECTED
+  AUTO_EXECUTED
+  EXPIRED
+}
+
+enum AgentActionType {
+  CREATE_JOB
+  RESCHEDULE_JOB
+  CREATE_QUOTE
+  CREATE_INVOICE
+  SEND_REMINDER
+  WEATHER_ALERT
+  SEASONAL_BATCH
+  SUGGEST_SERVICE
+  FLAG_OVERDUE
+  LOG_CHEMICAL
+}
+
+enum NotificationType {
+  AGENT_ACTION
+  OVERDUE_INVOICE
+  WEATHER_ALERT
+  JOB_REMINDER
+  SEASONAL_TRIGGER
+  SYSTEM
+}
+
+// ─────────────────────────────────────────────
+// Core Models
+// ─────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         UserRole @default(TECHNICIAN)
+  isActive     Boolean  @default(true)
+  photoUrl     String?
+  createdAt    DateTime @default(now())
+
+  assignedJobs  Job[]
+  agentActions  AgentAction[]
+  notifications Notification[]
+  equipment       Equipment[]
+  maintenanceLogs MaintenanceLog[] @relation("MaintenanceLogs")
+}
+
+model Client {
+  id        String   @id @default(cuid())
+  firstName String
+  lastName  String
+  email     String?  @unique
+  phone     String?
+  company   String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  properties         Property[]
+  jobs               Job[]
+  quotes             Quote[]
+  invoices           Invoice[]
+  seasonalContracts  SeasonalContract[]
+  recurringTemplates RecurringJobTemplate[]
+}
+
+model Property {
+  id            String  @id @default(cuid())
+  clientId      String
+  streetAddress String
+  city          String
+  state         String
+  zip           String
+  notes         String?
+
+  client               Client                 @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  jobs                 Job[]
+  quotes               Quote[]
+  invoices             Invoice[]
+  measurements         PropertyMeasurement[]
+  chemicalApplications ChemicalApplication[]
+  seasonalContracts    SeasonalContract[]
+  recurringTemplates   RecurringJobTemplate[]
+  healthScores         PropertyHealthScore[]
+}
+
+model Job {
+  id                  String     @id @default(cuid())
+  clientId            String
+  propertyId          String?
+  assignedUserId      String?
+  recurringTemplateId String?
+  title               String
+  description         String?
+  status              JobStatus  @default(PENDING)
+  scheduledStart      DateTime?
+  scheduledEnd        DateTime?
+  isRecurring         Boolean    @default(false)
+  // checklistItems stored as JSON array: [{ text: string, done: boolean }]
+  checklistItems      Json?
+  notes               String?
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+
+  client              Client                @relation(fields: [clientId], references: [id])
+  property            Property?             @relation(fields: [propertyId], references: [id])
+  assignedUser        User?                 @relation(fields: [assignedUserId], references: [id])
+  recurringTemplate   RecurringJobTemplate? @relation(fields: [recurringTemplateId], references: [id])
+  photos              JobPhoto[]
+  lineItems           LineItem[]
+  invoices            Invoice[]
+  chemicalApplications ChemicalApplication[]
+}
+
+model JobPhoto {
+  id         String    @id @default(cuid())
+  jobId      String
+  url        String
+  caption    String?
+  photoType  PhotoType @default(BEFORE)
+  // Stores Qwen 3.5 analysis result — JSONB, schema-free for flexibility
+  aiAnalysis Json?
+  createdAt  DateTime  @default(now())
+
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+}
+
+model Quote {
+  id         String      @id @default(cuid())
+  clientId   String
+  propertyId String?
+  title      String
+  status     QuoteStatus @default(DRAFT)
+  validUntil DateTime?
+  notes      String?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  client    Client     @relation(fields: [clientId], references: [id])
+  property  Property?  @relation(fields: [propertyId], references: [id])
+  lineItems LineItem[]
+  invoices  Invoice[]
+}
+
+model Invoice {
+  id         String        @id @default(cuid())
+  clientId   String
+  jobId      String?
+  quoteId    String?
+  propertyId String?
+  status     InvoiceStatus @default(DRAFT)
+  dueDate    DateTime?
+  paidAt     DateTime?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  client    Client     @relation(fields: [clientId], references: [id])
+  job       Job?       @relation(fields: [jobId], references: [id])
+  quote     Quote?     @relation(fields: [quoteId], references: [id])
+  property  Property?  @relation(fields: [propertyId], references: [id])
+  lineItems LineItem[]
+}
+
+model LineItem {
+  id          String  @id @default(cuid())
+  // Exactly one of the following must be set (enforced via CHECK constraint in init.sql)
+  jobId       String?
+  quoteId     String?
+  invoiceId   String?
+  serviceId   String?
+  description String
+  quantity    Float   @default(1)
+  unitPrice   Float
+
+  job     Job?             @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  quote   Quote?           @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  invoice Invoice?         @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  service ServiceCatalog?  @relation(fields: [serviceId], references: [id])
+}
+
+// ─────────────────────────────────────────────
+// Phase 1 Models — Service Catalog & Pricing
+// ─────────────────────────────────────────────
+
+model ServiceCatalog {
+  id             String          @id @default(cuid())
+  name           String
+  description    String?
+  category       ServiceCategory
+  pricingUnit    PricingUnit     @default(FLAT)
+  basePrice      Float
+  // Seasonal pricing adjustments: { "SPRING": 65.00, "SUMMER": 70.00 }
+  seasonalPrices Json?
+  isActive       Boolean         @default(true)
+  sortOrder      Int             @default(0)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  lineItems          LineItem[]
+  recurringTemplates RecurringJobTemplate[]
+}
+
+// ─────────────────────────────────────────────
+// Phase 1 Models — Property Intelligence
+// ─────────────────────────────────────────────
+
+model PropertyMeasurement {
+  id             String   @id @default(cuid())
+  propertyId     String
+  lotSizeSqft    Float?
+  lawnSqft       Float?
+  bedSqft        Float?
+  edgingLinearFt Float?
+  hardscapeSqft  Float?
+  notes          String?
+  measuredAt     DateTime @default(now())
+  measuredBy     String?  // userId who took measurements
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+}
+
+model ChemicalApplication {
+  id              String   @id @default(cuid())
+  propertyId      String
+  jobId           String?
+  appliedBy       String?  // userId
+  productName     String
+  epaRegNumber    String?
+  applicationRate String?  // e.g., "2 lbs per 1000 sqft"
+  areaTreatedSqft Float?
+  targetPest      String?
+  // Weather conditions at time of application
+  windSpeedMph    Float?
+  temperatureF    Float?
+  humidity        Float?
+  weatherNotes    String?
+  // Re-entry and safety
+  reentryHours    Int      @default(24)
+  reentryExpires  DateTime?
+  notes           String?
+  appliedAt       DateTime @default(now())
+  createdAt       DateTime @default(now())
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  job      Job?     @relation(fields: [jobId], references: [id])
+}
+
+// ─────────────────────────────────────────────
+// Phase 1 Models — Contracts & Recurring
+// ─────────────────────────────────────────────
+
+model SeasonalContract {
+  id         String   @id @default(cuid())
+  clientId   String
+  propertyId String?
+  title      String
+  startDate  DateTime
+  endDate    DateTime
+  totalValue Float?
+  notes      String?
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  client    Client    @relation(fields: [clientId], references: [id])
+  property  Property? @relation(fields: [propertyId], references: [id])
+  templates RecurringJobTemplate[]
+}
+
+model RecurringJobTemplate {
+  id                 String              @id @default(cuid())
+  clientId           String
+  propertyId         String?
+  serviceId          String?
+  contractId         String?
+  title              String
+  description        String?
+  frequency          RecurrenceFrequency
+  season             Season              @default(ALL_YEAR)
+  // Day preferences
+  preferredDayOfWeek Int?                // 0=Sun, 6=Sat
+  preferredTimeSlot  String?             // "MORNING", "AFTERNOON", "ANYTIME"
+  // Auto-generation tracking
+  lastGeneratedAt    DateTime?
+  nextGenerateAfter  DateTime?
+  isActive           Boolean             @default(true)
+  assignedUserId     String?
+  checklistTemplate  Json?               // same format as Job.checklistItems
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  client       Client            @relation(fields: [clientId], references: [id])
+  property     Property?         @relation(fields: [propertyId], references: [id])
+  service      ServiceCatalog?   @relation(fields: [serviceId], references: [id])
+  contract     SeasonalContract? @relation(fields: [contractId], references: [id])
+  generatedJobs Job[]
+}
+
+// ─────────────────────────────────────────────
+// Phase 1 Models — AI Agent Infrastructure
+// ─────────────────────────────────────────────
+
+model AgentAction {
+  id         String            @id @default(cuid())
+  type       AgentActionType
+  status     AgentActionStatus @default(PROPOSED)
+  userId     String?           // target user
+  // Describe what the agent wants to do
+  summary    String
+  details    Json?             // structured payload (e.g., the job data to create)
+  // Link to the resulting entity after confirmation
+  resultType String?           // "Job", "Quote", "Invoice", etc.
+  resultId   String?
+  // Metadata
+  resolvedAt DateTime?
+  resolvedBy String?           // userId who confirmed/rejected
+  expiresAt  DateTime?
+  createdAt  DateTime          @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+}
+
+model Notification {
+  id            String           @id @default(cuid())
+  userId        String
+  type          NotificationType
+  title         String
+  message       String
+  actionUrl     String?          // deep link (e.g., "/jobs/abc123")
+  isRead        Boolean          @default(false)
+  agentActionId String?
+  createdAt     DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─────────────────────────────────────────────
+// Phase 1 Models — Weather
+// ─────────────────────────────────────────────
+
+model WeatherCache {
+  id           String   @id @default(cuid())
+  zipCode      String
+  forecastDate DateTime @db.Date
+  // Open-Meteo API response: { tempHighF, tempLowF, precipMm, windMph, weatherCode, description }
+  data         Json
+  fetchedAt    DateTime @default(now())
+
+  @@unique([zipCode, forecastDate])
+  @@index([zipCode])
+}
+
+// ─────────────────────────────────────────────
+// Organization Settings
+// ─────────────────────────────────────────────
+
+model OrgSettings {
+  id          String  @id @default("default")
+  companyName String  @default("AgenticMeadows Landscaping")
+  companyLogo String? // URL or base64 data URI
+  address     String?
+  city        String?
+  state       String?
+  zip         String?
+  phone       String?
+  email       String?
+  website     String?
+  // Invoice defaults
+  invoicePrefix   String @default("INV")
+  invoiceNextNum  Int    @default(1001)
+  paymentTerms    String @default("Net 30")
+  invoiceFooter   String? // Custom footer text for invoices
+  updatedAt   DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// Custom Fields & Sections
+// ─────────────────────────────────────────────
+
+enum CustomFieldType {
+  TEXT
+  NUMBER
+  DATE
+  DROPDOWN
+  CHECKBOX
+  TEXTAREA
+  EMAIL
+  PHONE
+  URL
+  CURRENCY
+}
+
+enum CustomFieldEntity {
+  CLIENT
+  JOB
+  QUOTE
+  INVOICE
+  PROPERTY
+}
+
+model CustomFieldSection {
+  id          String            @id @default(cuid())
+  entity      CustomFieldEntity
+  name        String            // e.g., "Property Details", "Billing Info"
+  sortOrder   Int               @default(0)
+  isCollapsed Boolean           @default(false) // default collapsed state
+  createdAt   DateTime          @default(now())
+
+  fields CustomFieldDefinition[]
+
+  @@index([entity])
+}
+
+model CustomFieldDefinition {
+  id          String            @id @default(cuid())
+  entity      CustomFieldEntity
+  sectionId   String?
+  name        String            // display label
+  fieldKey    String            // unique key like "lot_condition", "referral_source"
+  fieldType   CustomFieldType   @default(TEXT)
+  isRequired  Boolean           @default(false)
+  placeholder String?
+  // For DROPDOWN type — JSON array of options: ["Option 1", "Option 2"]
+  options     Json?
+  defaultValue String?
+  sortOrder   Int               @default(0)
+  isActive    Boolean           @default(true)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  section CustomFieldSection? @relation(fields: [sectionId], references: [id])
+  values  CustomFieldValue[]
+
+  @@unique([entity, fieldKey])
+  @@index([entity])
+}
+
+model CustomFieldValue {
+  id        String @id @default(cuid())
+  fieldId   String
+  // The entity this value belongs to (polymorphic — one of these is set)
+  clientId  String?
+  jobId     String?
+  quoteId   String?
+  invoiceId String?
+  propertyId String?
+  // The actual value (stored as string, parsed based on field type)
+  value     String?
+
+  field     CustomFieldDefinition @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+
+  @@index([fieldId])
+  @@index([clientId])
+  @@index([jobId])
+}
+
+// ─────────────────────────────────────────────
+// AI Audit Log
+// ─────────────────────────────────────────────
+
+enum AuditEventType {
+  ENTITY_VIEW       // User looked up a client/job/quote/property
+  ACTION_PROPOSED   // AI proposed a write action
+  ACTION_CONFIRMED  // User confirmed an action
+  ACTION_REJECTED   // User rejected an action
+  BATCH_PROPOSED    // AI proposed a batch of actions
+  BATCH_CONFIRMED   // User confirmed a batch
+  SESSION_START     // New chat session started
+  SESSION_END       // Chat session ended
+}
+
+model AuditLog {
+  id              String         @id @default(cuid())
+  sessionId       String         // conversation_id
+  userId          String?
+  eventType       AuditEventType
+  // What happened
+  summary         String         // human-readable description
+  // Structured data about the event
+  entityType      String?        // "client", "job", "quote", etc.
+  entityId        String?        // ID of the entity involved
+  actionType      String?        // PendingAction type if applicable
+  payload         Json?          // full action payload for replay
+  result          Json?          // result after execution
+  // Inference metadata
+  inferenceMode   String?        // "ollama", "nvidia_cloud", "nemoclaw"
+  modelUsed       String?        // "qwen3.5:2b", "nemotron-3-super-120b"
+  latencyMs       Int?           // response time
+  // Timestamps
+  createdAt       DateTime       @default(now())
+
+  @@index([sessionId])
+  @@index([userId])
+  @@index([eventType])
+  @@index([createdAt])
+}
+
+// ─────────────────────────────────────────────
+// Predictive Maintenance Models
+// ─────────────────────────────────────────────
+
+model Equipment {
+  id              String   @id @default(cuid())
+  name            String   // "John Deere Z930M", "Stihl FS 131"
+  type            String   // MOWER, TRIMMER, BLOWER, EDGER, AERATOR, SPRAYER, CHAINSAW, OTHER
+  category        String   @default("EQUIPMENT") // EQUIPMENT, VEHICLE, TRAILER
+  make            String?
+  model           String?
+  serialNumber    String?
+  year            Int?
+  purchaseDate    DateTime?
+  purchasePrice   Float?
+  status          String   @default("ACTIVE") // ACTIVE, IN_SERVICE, RETIRED
+  currentHours    Float    @default(0)
+  currentMileage  Float    @default(0)
+  photoUrl        String?
+  notes           String?
+  assignedToId    String?
+  assignedTo      User?    @relation(fields: [assignedToId], references: [id])
+  maintenanceLogs MaintenanceLog[]
+  maintenanceSchedules MaintenanceSchedule[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model MaintenanceSchedule {
+  id              String   @id @default(cuid())
+  equipmentId     String
+  equipment       Equipment @relation(fields: [equipmentId], references: [id])
+  taskName        String   // "Oil Change", "Blade Sharpening", "Air Filter", "Tire Rotation"
+  intervalType    String   // HOURS, MILES, DAYS, MONTHS
+  intervalValue   Float    // e.g., 50 (every 50 hours), 5000 (every 5000 miles)
+  lastPerformed   DateTime?
+  lastHours       Float?
+  lastMileage     Float?
+  nextDue         DateTime?
+  nextDueHours    Float?
+  nextDueMileage  Float?
+  priority        String   @default("NORMAL") // LOW, NORMAL, HIGH, CRITICAL
+  estimatedCost   Float?
+  notes           String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model MaintenanceLog {
+  id              String   @id @default(cuid())
+  equipmentId     String
+  equipment       Equipment @relation(fields: [equipmentId], references: [id])
+  taskName        String
+  performedAt     DateTime @default(now())
+  performedById   String?
+  performedBy     User?    @relation("MaintenanceLogs", fields: [performedById], references: [id])
+  hoursAtService  Float?
+  mileageAtService Float?
+  cost            Float?
+  vendor          String?
+  parts           Json?    // [{name, partNumber, quantity, cost}]
+  notes           String?
+  photoUrls       Json?    // ["url1", "url2"]
+  createdAt       DateTime @default(now())
+}
+
+model PropertyHealthScore {
+  id              String   @id @default(cuid())
+  propertyId      String
+  property        Property @relation(fields: [propertyId], references: [id])
+  assessedAt      DateTime @default(now())
+  assessedById    String?
+  overallScore    Int      // 1-100
+  lawnHealth      Int?     // 1-100
+  irrigationHealth Int?    // 1-100
+  treeHealth      Int?     // 1-100
+  hardscapeCondition Int?  // 1-100
+  soilPh          Float?
+  soilMoisture    Float?
+  thatchDepth     Float?   // inches
+  grassHeight     Float?   // inches
+  weedDensity     String?  // NONE, LOW, MODERATE, HIGH
+  pestPresence    String?  // NONE, LOW, MODERATE, HIGH
+  predictedNeeds  Json?    // [{service, dueDate, reason, priority}]
+  notes           String?
+  photoUrls       Json?
+  createdAt       DateTime @default(now())
+}

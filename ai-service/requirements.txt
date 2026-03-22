@@ -1,0 +1,11 @@
+# AgenticMeadows AI Service Dependencies
+# NemoClaw handles sandboxing at the container level — no NeMo Guardrails needed
+
+fastapi>=0.103.0
+uvicorn[standard]>=0.23.0
+httpx>=0.24.1
+python-multipart>=0.0.9
+pydantic>=2.0
+openai>=1.0.0
+pillow>=10.0.0
+python-dotenv>=1.0.0

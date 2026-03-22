@@ -1,0 +1,420 @@
+{
+  "diseases": [
+    {
+      "name": "Brown Patch (Rhizoctonia)",
+      "category": "disease",
+      "symptoms": ["brown circular patches", "brown rings", "thinning grass", "lesions on blades", "smoke ring pattern", "irregular brown areas", "wilted grass"],
+      "favorable_conditions": ["high humidity", "temperatures above 80F", "excessive nitrogen", "poor drainage", "overwatering"],
+      "grass_types_affected": ["tall fescue", "perennial ryegrass", "kentucky bluegrass", "bermudagrass"],
+      "treatments": {
+        "chemical": [
+          {"product": "Azoxystrobin (Heritage)", "rate": "0.2-0.4 oz/1000 sqft", "interval": "14-28 days"},
+          {"product": "Propiconazole (Banner Maxx)", "rate": "1-2 fl oz/1000 sqft", "interval": "14-21 days"},
+          {"product": "Thiophanate-methyl (3336)", "rate": "4-8 oz/1000 sqft", "interval": "14-28 days"}
+        ],
+        "organic": [
+          {"product": "Neem oil", "rate": "2 tbsp/gallon water", "notes": "Apply in evening"},
+          {"product": "Corn meal", "rate": "20 lbs/1000 sqft", "notes": "Promotes beneficial microbes"},
+          {"product": "Baking soda solution", "rate": "1 tbsp/gallon water", "notes": "Raises pH on leaf surface"}
+        ],
+        "cultural": [
+          "Reduce nitrogen fertilization during hot periods",
+          "Water early morning only, avoid evening irrigation",
+          "Improve air circulation by pruning surrounding plants",
+          "Raise mowing height to 3-4 inches",
+          "Avoid mowing wet grass"
+        ]
+      }
+    },
+    {
+      "name": "Dollar Spot (Clarireedia)",
+      "category": "disease",
+      "symptoms": ["small silver dollar sized spots", "straw-colored patches", "hourglass lesions on blades", "cobweb-like mycelium", "small round dead spots"],
+      "favorable_conditions": ["low nitrogen", "drought stress", "heavy dew", "temperatures 60-80F", "humid conditions"],
+      "grass_types_affected": ["bermudagrass", "zoysia", "kentucky bluegrass", "bentgrass"],
+      "treatments": {
+        "chemical": [
+          {"product": "Propiconazole (Banner Maxx)", "rate": "1-2 fl oz/1000 sqft", "interval": "14-21 days"},
+          {"product": "Boscalid (Emerald)", "rate": "0.13-0.18 oz/1000 sqft", "interval": "14-28 days"}
+        ],
+        "organic": [
+          {"product": "Compost topdressing", "rate": "0.25 inch layer", "notes": "Increases soil biology"},
+          {"product": "Neem oil", "rate": "2 tbsp/gallon water", "notes": "Apply biweekly"}
+        ],
+        "cultural": [
+          "Increase nitrogen fertilization moderately",
+          "Water deeply and infrequently",
+          "Remove morning dew by dragging hose across lawn",
+          "Improve soil drainage"
+        ]
+      }
+    },
+    {
+      "name": "Gray Leaf Spot (Pyricularia grisea)",
+      "category": "disease",
+      "symptoms": ["gray oval lesions", "twisted leaf blades", "thinning turf", "gray spots with dark borders", "scorched appearance"],
+      "favorable_conditions": ["high humidity", "temperatures 80-90F", "excessive nitrogen", "shade", "wet foliage"],
+      "grass_types_affected": ["perennial ryegrass", "st augustinegrass", "tall fescue"],
+      "treatments": {
+        "chemical": [
+          {"product": "Azoxystrobin (Heritage)", "rate": "0.2-0.4 oz/1000 sqft", "interval": "14-28 days"},
+          {"product": "Pyraclostrobin (Insignia)", "rate": "0.5-0.9 oz/1000 sqft", "interval": "14-28 days"}
+        ],
+        "organic": [
+          {"product": "Potassium bicarbonate", "rate": "1-2 tbsp/gallon water", "notes": "Apply weekly during outbreaks"}
+        ],
+        "cultural": [
+          "Reduce nitrogen applications",
+          "Avoid irrigation in late afternoon/evening",
+          "Improve air movement and reduce shade",
+          "Mow at proper height"
+        ]
+      }
+    },
+    {
+      "name": "Pythium Blight",
+      "category": "disease",
+      "symptoms": ["greasy dark spots", "cottony mycelium", "collapsed grass blades", "streaked pattern following drainage", "rapid overnight damage"],
+      "favorable_conditions": ["temperatures above 85F", "very high humidity", "wet conditions", "poor drainage", "compacted soil"],
+      "grass_types_affected": ["perennial ryegrass", "bentgrass", "annual bluegrass"],
+      "treatments": {
+        "chemical": [
+          {"product": "Mefenoxam (Subdue Maxx)", "rate": "1-2 fl oz/1000 sqft", "interval": "10-21 days"},
+          {"product": "Fosetyl-Al (Signature)", "rate": "4 oz/1000 sqft", "interval": "14-21 days"}
+        ],
+        "organic": [
+          {"product": "Improve drainage", "rate": "N/A", "notes": "Core aerate and topdress with sand"}
+        ],
+        "cultural": [
+          "Avoid overwatering",
+          "Improve drainage immediately",
+          "Do not mow when wet",
+          "Reduce nitrogen during hot humid weather"
+        ]
+      }
+    },
+    {
+      "name": "Red Thread (Laetisaria fuciformis)",
+      "category": "disease",
+      "symptoms": ["pink-red thread-like strands", "reddish patches", "irregular shaped patches", "pink fuzzy growth on blades"],
+      "favorable_conditions": ["cool temperatures 40-70F", "wet conditions", "low nitrogen", "slow growth periods"],
+      "grass_types_affected": ["perennial ryegrass", "tall fescue", "kentucky bluegrass", "fine fescue"],
+      "treatments": {
+        "chemical": [
+          {"product": "Propiconazole (Banner Maxx)", "rate": "1-2 fl oz/1000 sqft", "interval": "14-21 days"}
+        ],
+        "organic": [
+          {"product": "Nitrogen-rich compost", "rate": "0.25 inch layer", "notes": "Stimulate growth to outpace disease"}
+        ],
+        "cultural": [
+          "Apply balanced nitrogen fertilizer",
+          "Improve air circulation",
+          "Water early in the day",
+          "Reduce thatch buildup"
+        ]
+      }
+    }
+  ],
+  "pests": [
+    {
+      "name": "Grubs (White Grubs)",
+      "category": "pest",
+      "symptoms": ["brown patches that pull up easily", "spongy turf", "birds pecking at lawn", "raccoon/skunk digging", "wilting despite irrigation", "irregular dead patches"],
+      "favorable_conditions": ["late summer", "fall", "well-irrigated lawns", "japanese beetle presence"],
+      "treatments": {
+        "chemical": [
+          {"product": "Chlorantraniliprole (GrubEx)", "rate": "2.87 lbs/1000 sqft", "interval": "Apply once in spring as preventive"},
+          {"product": "Trichlorfon (Dylox)", "rate": "6.9 lbs/1000 sqft", "interval": "Apply as curative when grubs are active"}
+        ],
+        "organic": [
+          {"product": "Milky spore", "rate": "1 tsp/4 ft grid", "notes": "Long-term biological control, takes 2-3 years"},
+          {"product": "Beneficial nematodes (Heterorhabditis)", "rate": "25 million/1000 sqft", "notes": "Apply in late summer, water in immediately"}
+        ],
+        "cultural": [
+          "Reduce irrigation in July to discourage egg-laying beetles",
+          "Let lawn go slightly dormant in mid-summer",
+          "Overseed in fall to repair damage"
+        ]
+      }
+    },
+    {
+      "name": "Chinch Bugs",
+      "category": "pest",
+      "symptoms": ["yellow patches spreading from edges", "drought-like symptoms that don't respond to water", "sunny areas affected most", "reddish-brown patches", "small black and white insects"],
+      "favorable_conditions": ["hot dry weather", "sunny areas", "thick thatch", "compacted soil"],
+      "treatments": {
+        "chemical": [
+          {"product": "Bifenthrin", "rate": "0.25-0.5 fl oz/1000 sqft", "interval": "As needed"},
+          {"product": "Trichlorfon (Dylox)", "rate": "6.9 lbs/1000 sqft", "interval": "As needed"}
+        ],
+        "organic": [
+          {"product": "Beauveria bassiana", "rate": "Per label", "notes": "Biological fungal control"},
+          {"product": "Diatomaceous earth", "rate": "Light dusting", "notes": "Physical barrier"}
+        ],
+        "cultural": [
+          "Reduce thatch below 0.5 inches",
+          "Water deeply to maintain lawn health",
+          "Use resistant grass varieties"
+        ]
+      }
+    },
+    {
+      "name": "Sod Webworms",
+      "category": "pest",
+      "symptoms": ["small brown moths flying at dusk", "irregular brown patches", "chewed grass blades", "green pellet frass", "birds feeding on lawn"],
+      "favorable_conditions": ["warm weather", "dry conditions", "closely mowed turf"],
+      "treatments": {
+        "chemical": [
+          {"product": "Bifenthrin", "rate": "0.25-0.5 fl oz/1000 sqft", "interval": "As needed"},
+          {"product": "Carbaryl (Sevin)", "rate": "Per label", "interval": "As needed"}
+        ],
+        "organic": [
+          {"product": "Bt (Bacillus thuringiensis)", "rate": "Per label", "notes": "Apply in evening when larvae are active"},
+          {"product": "Beneficial nematodes (Steinernema)", "rate": "25 million/1000 sqft", "notes": "Apply in evening, water in"}
+        ],
+        "cultural": [
+          "Raise mowing height",
+          "Maintain proper irrigation",
+          "Dethatch if thatch exceeds 0.5 inches"
+        ]
+      }
+    },
+    {
+      "name": "Armyworms",
+      "category": "pest",
+      "symptoms": ["rapid widespread damage", "skeletonized grass blades", "large caterpillars visible", "birds congregating", "brown patches overnight"],
+      "favorable_conditions": ["late summer", "fall", "after rain events", "warm humid weather"],
+      "treatments": {
+        "chemical": [
+          {"product": "Bifenthrin", "rate": "0.25-0.5 fl oz/1000 sqft", "interval": "Apply when detected"},
+          {"product": "Chlorantraniliprole (Acelepryn)", "rate": "Per label", "interval": "Apply when detected"}
+        ],
+        "organic": [
+          {"product": "Bt (Bacillus thuringiensis)", "rate": "Per label", "notes": "Most effective on small larvae"},
+          {"product": "Spinosad", "rate": "Per label", "notes": "Organic-approved insecticide"}
+        ],
+        "cultural": [
+          "Monitor lawns regularly in late summer",
+          "Treat early when caterpillars are small",
+          "Overseed damaged areas in fall"
+        ]
+      }
+    }
+  ],
+  "weeds": [
+    {
+      "name": "Crabgrass (Digitaria)",
+      "category": "weed",
+      "symptoms": ["coarse-textured clumps", "light green spreading grass", "finger-like seed heads", "patches in thin areas", "grows flat and spreading"],
+      "weed_type": "annual grassy",
+      "treatments": {
+        "chemical": [
+          {"product": "Prodiamine (Barricade) pre-emergent", "rate": "1.5 lbs/acre", "interval": "Apply in early spring before soil temps reach 55F"},
+          {"product": "Dithiopyr (Dimension) pre-emergent", "rate": "Per label", "interval": "Apply spring, provides post-emergent on young plants too"},
+          {"product": "Quinclorac (Drive XLR8) post-emergent", "rate": "Per label", "interval": "Apply to actively growing crabgrass"}
+        ],
+        "organic": [
+          {"product": "Corn gluten meal (pre-emergent)", "rate": "20 lbs/1000 sqft", "notes": "Apply early spring, also provides nitrogen"}
+        ],
+        "cultural": [
+          "Maintain thick healthy turf at 3+ inches",
+          "Overseed bare spots in fall",
+          "Avoid disturbing soil in spring",
+          "Time pre-emergent with forsythia bloom"
+        ]
+      }
+    },
+    {
+      "name": "Dandelion (Taraxacum)",
+      "category": "weed",
+      "symptoms": ["yellow flowers", "rosette of jagged leaves", "white puffy seed heads", "deep taproot", "flat-growing leaves"],
+      "weed_type": "perennial broadleaf",
+      "treatments": {
+        "chemical": [
+          {"product": "2,4-D + Dicamba + MCPP (Trimec)", "rate": "Per label", "interval": "Apply in fall for best results"},
+          {"product": "Triclopyr", "rate": "Per label", "interval": "Apply when actively growing"}
+        ],
+        "organic": [
+          {"product": "Vinegar-based herbicide (20% acetic acid)", "rate": "Direct spray", "notes": "Non-selective, spot treat only"},
+          {"product": "Manual removal", "rate": "N/A", "notes": "Pull entire taproot when soil is moist"}
+        ],
+        "cultural": [
+          "Maintain dense turf to prevent establishment",
+          "Mow at proper height",
+          "Overseed thin areas"
+        ]
+      }
+    },
+    {
+      "name": "Clover (Trifolium)",
+      "category": "weed",
+      "symptoms": ["three-leaf clusters", "white or pink flowers", "low growing patches", "green in drought when grass is brown"],
+      "weed_type": "perennial broadleaf",
+      "treatments": {
+        "chemical": [
+          {"product": "Triclopyr (Turflon Ester)", "rate": "Per label", "interval": "Apply in fall or spring"},
+          {"product": "Fluroxypyr + Triclopyr", "rate": "Per label", "interval": "Apply when actively growing"}
+        ],
+        "organic": [
+          {"product": "Manual removal", "rate": "N/A", "notes": "Hand pull small patches"},
+          {"product": "Corn gluten meal", "rate": "20 lbs/1000 sqft", "notes": "Pre-emergent and nitrogen source"}
+        ],
+        "cultural": [
+          "Apply nitrogen fertilizer (clover thrives in low-nitrogen lawns)",
+          "Maintain thick turf stand",
+          "Raise mowing height"
+        ]
+      }
+    },
+    {
+      "name": "Nutsedge (Cyperus)",
+      "category": "weed",
+      "symptoms": ["tall bright green grass-like blades", "triangular stem", "grows faster than surrounding grass", "thrives in wet areas", "yellowish seed heads"],
+      "weed_type": "perennial sedge",
+      "treatments": {
+        "chemical": [
+          {"product": "Halosulfuron (Sedgehammer)", "rate": "Per label", "interval": "Apply when actively growing, may need repeat"},
+          {"product": "Sulfentrazone (Dismiss)", "rate": "Per label", "interval": "Fast-acting, apply when young"}
+        ],
+        "organic": [
+          {"product": "Manual removal", "rate": "N/A", "notes": "Must remove nutlets; very difficult"}
+        ],
+        "cultural": [
+          "Improve drainage to reduce moisture",
+          "Do not over-irrigate",
+          "Maintain thick turf stand"
+        ]
+      }
+    }
+  ],
+  "seasonal_guides": {
+    "cool_season": {
+      "spring": {
+        "months": ["March", "April", "May"],
+        "tasks": [
+          {"task": "Apply pre-emergent herbicide", "timing": "When soil temp reaches 55F (around forsythia bloom)", "priority": "high"},
+          {"task": "First mowing", "timing": "When grass reaches 4 inches, mow to 3 inches", "priority": "high"},
+          {"task": "Soil test", "timing": "Early spring before fertilizing", "priority": "medium"},
+          {"task": "Light fertilization", "timing": "Late April to early May", "priority": "medium"},
+          {"task": "Aeration", "timing": "If needed, early spring (fall is better)", "priority": "low"},
+          {"task": "Weed spot-treatment", "timing": "As weeds emerge", "priority": "medium"},
+          {"task": "Grub preventive application", "timing": "Late April to May", "priority": "medium"}
+        ],
+        "tips": [
+          "Don't rush spring fertilization - wait until grass is actively growing",
+          "Avoid heavy foot traffic on wet spring lawns",
+          "Sharpen mower blades before first cut"
+        ]
+      },
+      "summer": {
+        "months": ["June", "July", "August"],
+        "tasks": [
+          {"task": "Raise mowing height", "timing": "Mow at 3.5-4 inches during heat stress", "priority": "high"},
+          {"task": "Deep watering", "timing": "1 inch per week, early morning", "priority": "high"},
+          {"task": "Monitor for disease", "timing": "Weekly inspection during humid periods", "priority": "high"},
+          {"task": "Spot-treat weeds", "timing": "Avoid broad applications in heat", "priority": "low"},
+          {"task": "Grub treatment if needed", "timing": "Late July to August for curative", "priority": "medium"}
+        ],
+        "tips": [
+          "Cool-season grasses may go dormant in extreme heat - this is normal",
+          "Avoid fertilizing during hot periods (above 85F)",
+          "Water early morning to reduce disease pressure"
+        ]
+      },
+      "fall": {
+        "months": ["September", "October", "November"],
+        "tasks": [
+          {"task": "Core aeration", "timing": "September to early October", "priority": "high"},
+          {"task": "Overseeding", "timing": "Immediately after aeration", "priority": "high"},
+          {"task": "Fall fertilization", "timing": "September and late October/November", "priority": "high"},
+          {"task": "Broadleaf weed treatment", "timing": "October when weeds are actively taking in nutrients", "priority": "medium"},
+          {"task": "Lower mowing height gradually", "timing": "Last 2-3 mows of season, down to 2.5 inches", "priority": "medium"},
+          {"task": "Leaf removal", "timing": "Ongoing as leaves fall", "priority": "medium"}
+        ],
+        "tips": [
+          "Fall is THE most important time for cool-season lawn care",
+          "Winterizer fertilizer in late fall promotes root growth",
+          "Keep mowing until grass stops growing"
+        ]
+      },
+      "winter": {
+        "months": ["December", "January", "February"],
+        "tasks": [
+          {"task": "Equipment maintenance", "timing": "Winter months", "priority": "high"},
+          {"task": "Plan spring program", "timing": "January-February", "priority": "medium"},
+          {"task": "Avoid foot traffic on frozen grass", "timing": "All winter", "priority": "medium"},
+          {"task": "Soil test if not done in fall", "timing": "Late February", "priority": "low"},
+          {"task": "Order supplies", "timing": "February", "priority": "medium"}
+        ],
+        "tips": [
+          "Stay off frozen turf to prevent crown damage",
+          "Use this time for equipment maintenance and blade sharpening",
+          "Review last year's performance and adjust plans"
+        ]
+      }
+    },
+    "warm_season": {
+      "spring": {
+        "months": ["March", "April", "May"],
+        "tasks": [
+          {"task": "Apply pre-emergent", "timing": "February-March before soil temps reach 55F", "priority": "high"},
+          {"task": "Begin mowing as green-up occurs", "timing": "When bermuda/zoysia starts growing", "priority": "high"},
+          {"task": "Scalp bermudagrass", "timing": "Early March to remove dead top growth", "priority": "medium"},
+          {"task": "First fertilization", "timing": "After full green-up (April-May)", "priority": "high"},
+          {"task": "Soil test", "timing": "Early spring", "priority": "medium"},
+          {"task": "Weed control", "timing": "Pre- and post-emergent as needed", "priority": "high"}
+        ],
+        "tips": [
+          "Don't fertilize warm-season grass too early - wait for full green-up",
+          "Bermuda and zoysia respond well to spring scalping",
+          "Time pre-emergent earlier than cool-season areas"
+        ]
+      },
+      "summer": {
+        "months": ["June", "July", "August"],
+        "tasks": [
+          {"task": "Regular fertilization", "timing": "Monthly during active growth", "priority": "high"},
+          {"task": "Mow frequently", "timing": "Bermuda at 1-2 inches, Zoysia at 1-2.5 inches", "priority": "high"},
+          {"task": "Irrigation management", "timing": "1 inch per week, deep watering", "priority": "high"},
+          {"task": "Pest monitoring", "timing": "Watch for chinch bugs, armyworms", "priority": "medium"},
+          {"task": "Post-emergent weed control", "timing": "Spot-treat as needed", "priority": "medium"}
+        ],
+        "tips": [
+          "Summer is prime growing season for warm-season grasses",
+          "Keep bermuda mowed low and frequent for best appearance",
+          "Watch for armyworm activity in late summer"
+        ]
+      },
+      "fall": {
+        "months": ["September", "October", "November"],
+        "tasks": [
+          {"task": "Final fertilization", "timing": "September, at least 6 weeks before first frost", "priority": "high"},
+          {"task": "Apply pre-emergent for winter weeds", "timing": "September-October", "priority": "high"},
+          {"task": "Reduce mowing as growth slows", "timing": "October-November", "priority": "medium"},
+          {"task": "Overseed with ryegrass (optional)", "timing": "October for winter color", "priority": "low"},
+          {"task": "Aeration", "timing": "Early fall while grass is still growing", "priority": "medium"}
+        ],
+        "tips": [
+          "Stop nitrogen fertilization 6 weeks before first expected frost",
+          "Pre-emergent for winter annual weeds (poa annua) is critical",
+          "Consider overseeding with perennial ryegrass for winter green"
+        ]
+      },
+      "winter": {
+        "months": ["December", "January", "February"],
+        "tasks": [
+          {"task": "Equipment maintenance", "timing": "Winter months", "priority": "high"},
+          {"task": "Plan next year's program", "timing": "January-February", "priority": "medium"},
+          {"task": "Monitor overseeded ryegrass", "timing": "If overseeded", "priority": "low"},
+          {"task": "Soil test", "timing": "Late winter", "priority": "medium"},
+          {"task": "Order supplies", "timing": "February", "priority": "medium"}
+        ],
+        "tips": [
+          "Warm-season grasses go dormant and turn brown - this is normal",
+          "Minimize foot traffic on dormant turf",
+          "This is the best time for equipment overhaul"
+        ]
+      }
+    }
+  }
+}
