@@ -188,6 +188,28 @@ export async function reactivateUser(req: Request, res: Response, next: NextFunc
   }
 }
 
+// ── Admin Password Reset ──────────────────────────────────────────────
+
+export async function resetUserPassword(req: Request, res: Response, next: NextFunction) {
+  try {
+    if (req.user!.role !== "ADMIN") return next(createError("Forbidden", 403));
+    const { id } = req.params;
+    const { newPassword } = req.body;
+    if (!newPassword || newPassword.length < 6) {
+      return next(createError("Password must be at least 6 characters", 400));
+    }
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    const user = await prisma.user.update({
+      where: { id },
+      data: { passwordHash },
+      select: { id: true, name: true, email: true, role: true },
+    });
+    res.json({ success: true, message: `Password reset for ${user.email}` });
+  } catch (err) {
+    next(err);
+  }
+}
+
 // ── Invite Token Endpoints ──────────────────────────────────────────────
 
 export async function createInvite(req: Request, res: Response, next: NextFunction) {

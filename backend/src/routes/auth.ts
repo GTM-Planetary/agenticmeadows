@@ -5,7 +5,7 @@ import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
 import {
   register, login, getMe, hasUsers, createInvite, validateInvite, registerWithInvite,
-  updateMe, updateMyPhoto, listUsers, deactivateUser, reactivateUser,
+  updateMe, updateMyPhoto, listUsers, deactivateUser, reactivateUser, resetUserPassword,
 } from "../controllers/authController";
 import { requireAuth } from "../middleware/auth";
 
@@ -47,6 +47,7 @@ router.put("/me/photo", requireAuth, upload.single("photo"), updateMyPhoto);
 router.get("/users", requireAuth, listUsers);
 router.put("/users/:id/deactivate", requireAuth, deactivateUser);
 router.put("/users/:id/reactivate", requireAuth, reactivateUser);
+router.put("/users/:id/reset-password", requireAuth, resetUserPassword);
 
 // Invite token endpoints
 router.post("/invite", requireAuth, createInvite);

@@ -10,6 +10,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [checking, setChecking] = useState(true);
+  const [showForgot, setShowForgot] = useState(false);
 
   // Check if any users exist — if not, redirect to onboarding wizard
   useEffect(() => {
@@ -99,6 +100,23 @@ export default function Login() {
             <button type="submit" disabled={loading} className="btn-primary w-full justify-center py-2.5">
               {loading ? "Signing in..." : "Sign In"}
             </button>
+
+            <button
+              type="button"
+              onClick={() => setShowForgot(!showForgot)}
+              className="text-sm text-am-green-mid hover:underline w-full text-center mt-2"
+            >
+              Forgot your password?
+            </button>
+
+            {showForgot && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mt-2 text-sm text-amber-800">
+                <p className="font-medium mb-2">Password Recovery</p>
+                <p className="mb-2"><strong>Team members:</strong> Ask your admin to reset your password from Settings &rarr; Users &amp; Roles.</p>
+                <p><strong>Admins:</strong> Run this from your install directory:</p>
+                <code className="block bg-amber-100 rounded px-2 py-1 mt-1 text-xs font-mono">./reset-password.sh your@email.com</code>
+              </div>
+            )}
           </form>
         </div>
 
