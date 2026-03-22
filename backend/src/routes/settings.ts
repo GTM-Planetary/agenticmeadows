@@ -114,6 +114,42 @@ router.delete("/nvidia-key", async (req: Request, res: Response, next: NextFunct
   }
 });
 
+// ── Job Types ─────────────────────────────────────────────────────────────
+
+const DEFAULT_JOB_TYPES = [
+  "Mow", "Fertilize", "Weed Control", "Aeration", "Overseeding",
+  "Spring Cleanup", "Fall Cleanup", "Mulch", "Hedge Trimming", "Edging",
+  "Leaf Removal", "Snow Removal", "Irrigation Check", "Tree Trimming",
+  "Garden Maintenance", "Landscape Design", "Hardscape", "Other",
+];
+
+// GET /api/settings/job-types — returns configured job types
+router.get("/job-types", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const settings = readSettings();
+    const jobTypes: string[] = settings.job_types ?? DEFAULT_JOB_TYPES;
+    res.json({ jobTypes });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PUT /api/settings/job-types — save job types list
+router.put("/job-types", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { jobTypes } = req.body;
+    if (!Array.isArray(jobTypes)) {
+      return next(createError("jobTypes must be an array of strings", 400));
+    }
+    const settings = readSettings();
+    settings.job_types = jobTypes;
+    writeSettings(settings);
+    res.json({ jobTypes });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // Test NVIDIA API key connectivity
 router.post("/nvidia-key/test", async (req: Request, res: Response, next: NextFunction) => {
   try {

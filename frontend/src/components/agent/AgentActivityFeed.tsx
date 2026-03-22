@@ -84,7 +84,7 @@ export default function AgentActivityFeed() {
         <div className="px-5 py-8 text-center text-gray-400 text-sm">Loading proposals...</div>
       ) : actions.length === 0 ? (
         <div className="px-5 py-8 text-center text-gray-400 text-sm">
-          <p className="text-2xl mb-2">{"\uD83E\uDD16"}</p>
+          <p className="text-2xl mb-2">{"🏞️"}</p>
           <p>No pending proposals.</p>
           <p className="mt-1">Your AI assistant is monitoring your business.</p>
         </div>
@@ -93,7 +93,7 @@ export default function AgentActivityFeed() {
           {actions.map((action) => (
             <li key={action.id} className="px-5 py-3">
               <div className="flex items-start gap-3">
-                <span className="text-lg mt-0.5">{ACTION_ICONS[action.type] ?? "\uD83E\uDD16"}</span>
+                <span className="text-lg mt-0.5">{ACTION_ICONS[action.type] ?? "🏞️"}</span>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-gray-900">{action.summary}</p>
                   <p className="text-xs text-gray-400 mt-0.5">{timeAgo(action.createdAt)}</p>

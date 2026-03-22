@@ -326,6 +326,12 @@ export const propertyHealthApi = {
   predictions: () => api<any[]>("/api/property-health/predictions"),
 };
 
+// ── Settings ─────────────────────────────────────────────────────────────
+export const settingsApi = {
+  getJobTypes: () => api<{ jobTypes: string[] }>("/api/settings/job-types"),
+  updateJobTypes: (jobTypes: string[]) => apiPut<{ jobTypes: string[] }>("/api/settings/job-types", { jobTypes }),
+};
+
 // ── AI ────────────────────────────────────────────────────────────────────
 export const aiChatApi = {
   chat: (params: {

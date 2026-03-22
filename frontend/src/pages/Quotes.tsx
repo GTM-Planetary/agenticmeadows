@@ -18,7 +18,18 @@ interface LineItemRow {
   description: string;
   quantity: number;
   unitPrice: number;
+  pricingUnit: string;
 }
+
+const UNIT_LABELS: Record<string, string> = {
+  flat: "flat rate",
+  sqft: "per sqft",
+  "lin ft": "per lin ft",
+  hour: "per hour",
+  "cubic yard": "per cu yd",
+  each: "each",
+  "": "each",
+};
 
 function LineItemEditor({
   items,
@@ -43,7 +54,14 @@ function LineItemEditor({
       setItems(
         items.map((item, i) =>
           i === idx
-            ? { ...item, serviceId: svc.id, description: svc.name, unitPrice: svc.basePrice }
+            ? {
+                ...item,
+                serviceId: svc.id,
+                description: svc.name,
+                unitPrice: svc.basePrice,
+                pricingUnit: svc.pricingUnit || "flat",
+                quantity: (svc.pricingUnit as string)?.toLowerCase().includes("flat") ? 1 : item.quantity,
+              }
             : item
         )
       );
@@ -52,9 +70,28 @@ function LineItemEditor({
 
   const total = items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
 
+  function getQtyLabel(unit: string): string {
+    if (!unit || unit === "flat" || unit === "Flat Rate") return "Qty";
+    if (unit === "sqft" || unit === "per sqft") return "Sqft";
+    if (unit === "lin ft" || unit === "per lin ft") return "Lin ft";
+    if (unit === "hour" || unit === "per hour") return "Hours";
+    if (unit === "cubic yard" || unit === "per cubic yard") return "Cu yds";
+    return "Qty";
+  }
+
   return (
     <div>
       <label className="label">Line Items</label>
+      {/* Column headers */}
+      <div className="flex gap-2 items-center mb-1 text-xs text-gray-400 font-medium">
+        <span className="w-40">Service</span>
+        <span className="flex-1">Description</span>
+        <span className="w-16 text-center">Qty/Unit</span>
+        <span className="w-20 text-center">Unit</span>
+        <span className="w-24 text-right">Unit Price</span>
+        <span className="w-20 text-right">Line Total</span>
+        <span className="w-6"></span>
+      </div>
       <div className="space-y-2">
         {items.map((item, i) => (
           <div key={i} className="flex gap-2 items-start">
@@ -66,7 +103,7 @@ function LineItemEditor({
               <option value="">Custom</option>
               {services.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.name} (${s.basePrice.toFixed(2)})
+                  {s.name} (${s.basePrice.toFixed(2)}/{s.pricingUnit || "flat"})
                 </option>
               ))}
             </select>
@@ -80,9 +117,14 @@ function LineItemEditor({
               className="input w-16 text-sm text-center"
               type="number"
               min={1}
+              placeholder={getQtyLabel(item.pricingUnit)}
+              title={getQtyLabel(item.pricingUnit)}
               value={item.quantity}
               onChange={(e) => updateItem(i, "quantity", parseFloat(e.target.value) || 1)}
             />
+            <span className="input w-20 text-xs text-gray-500 text-center bg-gray-50 flex items-center justify-center">
+              {UNIT_LABELS[item.pricingUnit] || item.pricingUnit || "each"}
+            </span>
             <input
               className="input w-24 text-sm text-right"
               type="number"
@@ -92,6 +134,9 @@ function LineItemEditor({
               value={item.unitPrice || ""}
               onChange={(e) => updateItem(i, "unitPrice", parseFloat(e.target.value) || 0)}
             />
+            <span className="w-20 text-sm text-right text-gray-700 font-medium pt-2">
+              ${(item.quantity * item.unitPrice).toFixed(2)}
+            </span>
             {items.length > 1 && (
               <button
                 type="button"
@@ -106,7 +151,7 @@ function LineItemEditor({
         <button
           type="button"
           onClick={() =>
-            setItems([...items, { serviceId: "", description: "", quantity: 1, unitPrice: 0 }])
+            setItems([...items, { serviceId: "", description: "", quantity: 1, unitPrice: 0, pricingUnit: "flat" }])
           }
           className="btn-ghost text-xs"
         >
@@ -134,7 +179,7 @@ function QuoteModal({
   const [clients, setClients] = useState<Client[]>([]);
   const [form, setForm] = useState({ clientId: "", title: "", notes: "" });
   const [items, setItems] = useState<LineItemRow[]>([
-    { serviceId: "", description: "", quantity: 1, unitPrice: 0 },
+    { serviceId: "", description: "", quantity: 1, unitPrice: 0, pricingUnit: "flat" },
   ]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -247,6 +292,7 @@ function QuoteDetailPanel({
       description: li.description,
       quantity: li.quantity,
       unitPrice: li.unitPrice,
+      pricingUnit: (li as any).pricingUnit || "flat",
     }))
   );
   const [editLoading, setEditLoading] = useState(false);
@@ -271,6 +317,7 @@ function QuoteDetailPanel({
         description: li.description,
         quantity: li.quantity,
         unitPrice: li.unitPrice,
+        pricingUnit: (li as any).pricingUnit || "flat",
       }))
     );
     setEditError("");

@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import type { AuthUser } from "../../types";
 import NotificationBell from "./NotificationBell";
@@ -9,13 +10,82 @@ interface Props {
   chatOpen: boolean;
 }
 
+const newMenuItems = [
+  { icon: "\uD83D\uDCCB", label: "New Job", path: "/jobs?new=true" },
+  { icon: "\uD83D\uDC64", label: "New Client", path: "/clients?new=true" },
+  { icon: "\uD83D\uDCC4", label: "New Quote", path: "/quotes?new=true" },
+  { icon: "\uD83D\uDCB0", label: "New Invoice", path: "/invoices?new=true" },
+];
+
 export default function TopBar({ user, onLogout, onToggleChat, chatOpen }: Props) {
   const navigate = useNavigate();
+  const [newMenuOpen, setNewMenuOpen] = useState(false);
+  const newMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close on Escape
+  useEffect(() => {
+    if (!newMenuOpen) return;
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setNewMenuOpen(false);
+    }
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [newMenuOpen]);
+
+  // Close on click outside
+  useEffect(() => {
+    if (!newMenuOpen) return;
+    function handleClick(e: MouseEvent) {
+      if (newMenuRef.current && !newMenuRef.current.contains(e.target as Node)) {
+        setNewMenuOpen(false);
+      }
+    }
+    const timer = setTimeout(() => {
+      document.addEventListener("mousedown", handleClick);
+    }, 0);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("mousedown", handleClick);
+    };
+  }, [newMenuOpen]);
+
+  const handleNewMenuClick = useCallback((path: string) => {
+    setNewMenuOpen(false);
+    navigate(path);
+  }, [navigate]);
 
   return (
     <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0">
       <div />
       <div className="flex items-center gap-3">
+        {/* + New button with dropdown */}
+        <div className="relative" ref={newMenuRef}>
+          <button
+            onClick={() => setNewMenuOpen((prev) => !prev)}
+            className="btn-primary text-sm py-1.5 px-3 flex items-center gap-1"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            New
+          </button>
+
+          {newMenuOpen && (
+            <div className="absolute right-0 top-full mt-1 bg-white shadow-lg rounded-lg border border-gray-200 py-1 z-50 min-w-[180px]">
+              {newMenuItems.map((item) => (
+                <button
+                  key={item.path}
+                  onClick={() => handleNewMenuClick(item.path)}
+                  className="w-full px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-center gap-2 text-sm text-gray-700 text-left"
+                >
+                  <span>{item.icon}</span>
+                  <span>{item.label}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* AI Chat toggle */}
         <button
           onClick={onToggleChat}
@@ -25,8 +95,8 @@ export default function TopBar({ user, onLogout, onToggleChat, chatOpen }: Props
               : "text-gray-600 hover:bg-gray-100"
           }`}
         >
-          <span>{"\uD83E\uDD16"}</span>
-          <span>Glen AI</span>
+          <span>🏞️</span>
+          <span>Ask Glen</span>
           <span className={`w-2 h-2 rounded-full ${chatOpen ? "bg-turf-500" : "bg-gray-300"}`} />
         </button>
 

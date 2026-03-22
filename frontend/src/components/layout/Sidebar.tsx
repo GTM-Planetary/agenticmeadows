@@ -19,9 +19,7 @@ export default function Sidebar() {
       {/* Logo */}
       <div className="px-5 py-5 border-b border-turf-800">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-turf-500 rounded-lg flex items-center justify-center text-lg">
-            🌿
-          </div>
+          <img src="/am-icon.png" alt="AgenticMeadows" className="w-8 h-8 rounded-lg object-contain" />
           <div>
             <p className="font-bold text-sm leading-tight">AgenticMeadows</p>
             <p className="text-turf-400 text-xs">Field Service</p>

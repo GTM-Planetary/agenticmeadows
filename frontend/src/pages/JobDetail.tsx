@@ -1,10 +1,17 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { jobsApi, clientsApi } from "../api";
+import { jobsApi, clientsApi, settingsApi } from "../api";
 import { api } from "../api/client";
 import type { Job, JobStatus, ChecklistItem, JobPhoto, Client } from "../types";
 import SitePhotoSection from "../components/jobs/SitePhotoSection";
 import AIChatPanel from "../components/layout/AIChatPanel";
+
+const DEFAULT_JOB_TYPES = [
+  "Mow", "Fertilize", "Weed Control", "Aeration", "Overseeding",
+  "Spring Cleanup", "Fall Cleanup", "Mulch", "Hedge Trimming", "Edging",
+  "Leaf Removal", "Snow Removal", "Irrigation Check", "Tree Trimming",
+  "Garden Maintenance", "Landscape Design", "Hardscape", "Other",
+];
 
 const statusColors: Record<JobStatus, string> = {
   PENDING: "bg-yellow-100 text-yellow-700",
@@ -116,6 +123,8 @@ export default function JobDetail() {
   const [editError, setEditError] = useState("");
   const [clients, setClients] = useState<Client[]>([]);
   const [users, setUsers] = useState<{ id: string; name: string }[]>([]);
+  const [jobTypes, setJobTypes] = useState<string[]>(DEFAULT_JOB_TYPES);
+  const [customJobType, setCustomJobType] = useState("");
 
   useEffect(() => {
     if (id) jobsApi.get(id).then(setJob).catch(console.error);
@@ -123,6 +132,27 @@ export default function JobDetail() {
 
   function enterEditMode() {
     if (!job) return;
+    // Determine if existing title matches a known job type or is custom
+    settingsApi.getJobTypes()
+      .then((d) => {
+        setJobTypes(d.jobTypes);
+        if (d.jobTypes.includes(job.title)) {
+          setEditForm((prev) => ({ ...prev, title: job.title }));
+          setCustomJobType("");
+        } else {
+          setEditForm((prev) => ({ ...prev, title: "Other" }));
+          setCustomJobType(job.title);
+        }
+      })
+      .catch(() => {
+        setJobTypes(DEFAULT_JOB_TYPES);
+        if (DEFAULT_JOB_TYPES.includes(job.title)) {
+          setCustomJobType("");
+        } else {
+          setEditForm((prev) => ({ ...prev, title: "Other" }));
+          setCustomJobType(job.title);
+        }
+      });
     setEditForm({
       title: job.title,
       description: job.description || "",
@@ -147,6 +177,8 @@ export default function JobDetail() {
     setEditError("");
   }
 
+  const resolvedEditTitle = editForm.title === "Other" ? customJobType : editForm.title;
+
   async function handleSaveEdit(e: React.FormEvent) {
     e.preventDefault();
     if (!id) return;
@@ -154,7 +186,7 @@ export default function JobDetail() {
     setEditError("");
     try {
       const updated = await jobsApi.update(id, {
-        title: editForm.title,
+        title: resolvedEditTitle,
         description: editForm.description || undefined,
         clientId: editForm.clientId,
         propertyId: editForm.propertyId || undefined,
@@ -223,7 +255,8 @@ export default function JobDetail() {
         <div className="flex items-center gap-2 text-sm text-gray-500">
           <Link to="/jobs" className="hover:text-turf-600">Jobs</Link>
           <span>/</span>
-          <span className="truncate">{job.title}</span>
+          <span className="truncate">{job.client ? `${job.client.firstName} ${job.client.lastName}` : job.title}</span>
+          {job.client && <><span>/</span><span className="truncate text-gray-400">{job.title}</span></>}
         </div>
 
         {/* Header */}
@@ -239,13 +272,26 @@ export default function JobDetail() {
               </div>
 
               <div>
-                <label className="label">Title *</label>
-                <input
+                <label className="label">Job Type *</label>
+                <select
                   className="input"
                   required
                   value={editForm.title}
                   onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
-                />
+                >
+                  <option value="">Select type...</option>
+                  {jobTypes.map((t) => <option key={t} value={t}>{t}</option>)}
+                  {!jobTypes.includes("Other") && <option value="Other">Other</option>}
+                </select>
+                {editForm.title === "Other" && (
+                  <input
+                    className="input mt-2"
+                    required
+                    value={customJobType}
+                    onChange={(e) => setCustomJobType(e.target.value)}
+                    placeholder="Enter custom job type..."
+                  />
+                )}
               </div>
 
               <div>
@@ -349,14 +395,20 @@ export default function JobDetail() {
             <>
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h1 className="text-xl font-bold text-gray-900">{job.title}</h1>
-                  {job.client && (
-                    <Link to={`/clients/${job.client.id}`} className="text-sm text-turf-600 hover:underline">
+                  {job.client ? (
+                    <Link to={`/clients/${job.client.id}`} className="text-2xl font-bold text-gray-900 hover:text-turf-700 transition-colors">
                       {job.client.firstName} {job.client.lastName}
                     </Link>
+                  ) : (
+                    <h1 className="text-2xl font-bold text-gray-900">No Client</h1>
                   )}
+                  <p className="text-sm text-gray-500 mt-1">
+                    <span className="text-gray-400">Job Type:</span>{" "}
+                    <span className="text-gray-700 font-medium">{job.title}</span>
+                  </p>
                   {job.property && (
                     <p className="text-sm text-gray-500 mt-0.5">
+                      <span className="text-gray-400">Property:</span>{" "}
                       {job.property.streetAddress}, {job.property.city}
                     </p>
                   )}

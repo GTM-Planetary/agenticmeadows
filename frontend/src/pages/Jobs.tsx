@@ -1,7 +1,14 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { jobsApi, clientsApi } from "../api";
+import { jobsApi, clientsApi, settingsApi } from "../api";
 import type { Job, Client, JobStatus } from "../types";
+
+const DEFAULT_JOB_TYPES = [
+  "Mow", "Fertilize", "Weed Control", "Aeration", "Overseeding",
+  "Spring Cleanup", "Fall Cleanup", "Mulch", "Hedge Trimming", "Edging",
+  "Leaf Removal", "Snow Removal", "Irrigation Check", "Tree Trimming",
+  "Garden Maintenance", "Landscape Design", "Hardscape", "Other",
+];
 
 const statusColors: Record<JobStatus, string> = {
   PENDING: "bg-yellow-100 text-yellow-700",
@@ -13,6 +20,8 @@ const statusColors: Record<JobStatus, string> = {
 
 function JobModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
   const [clients, setClients] = useState<Client[]>([]);
+  const [jobTypes, setJobTypes] = useState<string[]>(DEFAULT_JOB_TYPES);
+  const [customJobType, setCustomJobType] = useState("");
   const [form, setForm] = useState({
     clientId: "", title: "", description: "",
     scheduledStart: "", scheduledEnd: "", notes: "",
@@ -20,7 +29,12 @@ function JobModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => vo
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => { clientsApi.list().then(setClients).catch(console.error); }, []);
+  useEffect(() => {
+    clientsApi.list().then(setClients).catch(console.error);
+    settingsApi.getJobTypes().then((d) => setJobTypes(d.jobTypes)).catch(() => setJobTypes(DEFAULT_JOB_TYPES));
+  }, []);
+
+  const resolvedTitle = form.title === "Other" ? customJobType : form.title;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -29,7 +43,7 @@ function JobModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => vo
     try {
       await jobsApi.create({
         clientId: form.clientId,
-        title: form.title,
+        title: resolvedTitle,
         description: form.description || undefined,
         scheduledStart: form.scheduledStart || undefined,
         scheduledEnd: form.scheduledEnd || undefined,
@@ -57,8 +71,15 @@ function JobModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => vo
             </select>
           </div>
           <div>
-            <label className="label">Job Title *</label>
-            <input className="input" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Spring Lawn Cleanup" />
+            <label className="label">Job Type *</label>
+            <select className="input" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}>
+              <option value="">Select type...</option>
+              {jobTypes.map((t) => <option key={t} value={t}>{t}</option>)}
+              {!jobTypes.includes("Other") && <option value="Other">Other</option>}
+            </select>
+            {form.title === "Other" && (
+              <input className="input mt-2" required value={customJobType} onChange={(e) => setCustomJobType(e.target.value)} placeholder="Enter custom job type..." />
+            )}
           </div>
           <div>
             <label className="label">Description</label>

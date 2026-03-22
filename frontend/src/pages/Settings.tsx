@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { api, apiPost, apiPut, apiDelete } from "../api/client";
-import { authApi } from "../api";
+import { authApi, settingsApi } from "../api";
 
 interface UserRecord {
   id: string;
@@ -28,11 +28,11 @@ interface PlatformApiKey {
   lastUsedAt?: string;
 }
 
-type Tab = "general" | "org" | "users" | "customfields" | "guardrails" | "aiagent" | "integrations" | "apikeys" | "profile";
+type Tab = "org" | "users" | "customfields" | "guardrails" | "aiagent" | "integrations" | "apikeys" | "profile";
 
 export default function Settings() {
   const { user } = useAuth();
-  const [tab, setTab] = useState<Tab>("general");
+  const [tab, setTab] = useState<Tab>("org");
 
   return (
     <div>
@@ -44,7 +44,6 @@ export default function Settings() {
       {/* Tab navigation */}
       <div className="flex gap-1 bg-gray-100 rounded-lg p-1 mb-6 w-fit">
         {([
-          { key: "general", label: "General" },
           { key: "org", label: "Organization" },
           { key: "users", label: "Users & Roles" },
           { key: "customfields", label: "Custom Fields" },
@@ -66,7 +65,6 @@ export default function Settings() {
         ))}
       </div>
 
-      {tab === "general" && <GeneralSettings />}
       {tab === "org" && <OrgSettingsTab />}
       {tab === "users" && <UserManagement currentUser={user} />}
       {tab === "customfields" && <CustomFieldsTab />}
@@ -153,15 +151,22 @@ function OrgSettingsTab() {
     zip: null, phone: null, email: null, website: null,
     invoicePrefix: "INV", invoiceNextNum: 1001, paymentTerms: "Net 30", invoiceFooter: null,
   });
+  const [companyZip, setCompanyZip] = useState("");
+  const [defaultJobDuration, setDefaultJobDuration] = useState("120");
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     api<OrgData>("/api/org").then((data) => { setOrg(data); setLoading(false); }).catch(() => setLoading(false));
+    setCompanyZip(localStorage.getItem("am_company_zip") || "");
+    setDefaultJobDuration(localStorage.getItem("am_default_job_duration") || "120");
   }, []);
 
   async function handleSave() {
     await apiPut("/api/org", org);
+    localStorage.setItem("am_company_name", org.companyName);
+    localStorage.setItem("am_company_zip", companyZip);
+    localStorage.setItem("am_default_job_duration", defaultJobDuration);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   }
@@ -292,7 +297,7 @@ function OrgSettingsTab() {
               {org.companyLogo ? (
                 <img src={org.companyLogo} alt="Logo" className="w-12 h-12 object-contain" />
               ) : (
-                <div className="w-12 h-12 bg-turf-100 rounded-lg flex items-center justify-center text-xl">🌿</div>
+                <img src="/am-icon.png" alt="Logo" className="w-12 h-12 rounded-lg object-contain" />
               )}
               <div>
                 <p className="font-bold text-gray-900">{org.companyName || "Your Company"}</p>
@@ -313,8 +318,134 @@ function OrgSettingsTab() {
         </div>
       </div>
 
+      {/* Operations Settings */}
+      <div className="card p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Operations Settings</h2>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="label">Service Area ZIP Code</label>
+            <input className="input" value={companyZip} onChange={(e) => setCompanyZip(e.target.value)} placeholder="83605" />
+            <p className="text-xs text-gray-400 mt-1">Used by Glen for weather-aware scheduling</p>
+          </div>
+          <div>
+            <label className="label">Default Job Duration (minutes)</label>
+            <input className="input" type="number" value={defaultJobDuration} onChange={(e) => setDefaultJobDuration(e.target.value)} />
+          </div>
+        </div>
+      </div>
+
+      {/* Job Types */}
+      <JobTypesSettings />
+
       <button onClick={handleSave} className="btn-primary">
         {saved ? "Saved!" : "Save Organization Settings"}
+      </button>
+    </div>
+  );
+}
+
+// ── Job Types Settings ────────────────────────────────────────────────────
+
+const DEFAULT_JOB_TYPES = [
+  "Mow", "Fertilize", "Weed Control", "Aeration", "Overseeding",
+  "Spring Cleanup", "Fall Cleanup", "Mulch", "Hedge Trimming", "Edging",
+  "Leaf Removal", "Snow Removal", "Irrigation Check", "Tree Trimming",
+  "Garden Maintenance", "Landscape Design", "Hardscape", "Other",
+];
+
+function JobTypesSettings() {
+  const [jobTypes, setJobTypes] = useState<string[]>([]);
+  const [newType, setNewType] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    settingsApi.getJobTypes()
+      .then((d) => { setJobTypes(d.jobTypes); setLoading(false); })
+      .catch(() => { setJobTypes(DEFAULT_JOB_TYPES); setLoading(false); });
+  }, []);
+
+  async function saveTypes(types: string[]) {
+    setSaving(true);
+    try {
+      await settingsApi.updateJobTypes(types);
+      setJobTypes(types);
+    } catch {
+      // revert on error
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function handleAdd(e: React.FormEvent) {
+    e.preventDefault();
+    const trimmed = newType.trim();
+    if (!trimmed || jobTypes.includes(trimmed)) return;
+    const updated = [...jobTypes, trimmed];
+    setNewType("");
+    saveTypes(updated);
+  }
+
+  function handleRemove(type: string) {
+    const updated = jobTypes.filter((t) => t !== type);
+    saveTypes(updated);
+  }
+
+  function handleReset() {
+    saveTypes([...DEFAULT_JOB_TYPES]);
+  }
+
+  if (loading) return null;
+
+  return (
+    <div className="card p-6">
+      <h2 className="text-lg font-semibold text-gray-900 mb-1">Job Types</h2>
+      <p className="text-sm text-gray-500 mb-4">Configure the job types available in dropdowns across the platform.</p>
+
+      {/* Current job types as pills */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        {jobTypes.map((type) => (
+          <span key={type} className="inline-flex items-center gap-1 bg-gray-100 rounded-full px-3 py-1 text-sm text-gray-700">
+            {type}
+            <button
+              type="button"
+              onClick={() => handleRemove(type)}
+              className="text-gray-400 hover:text-red-500 ml-0.5 text-xs font-bold"
+              title={`Remove ${type}`}
+            >
+              &times;
+            </button>
+          </span>
+        ))}
+        {jobTypes.length === 0 && (
+          <p className="text-sm text-gray-400 italic">No job types configured.</p>
+        )}
+      </div>
+
+      {/* Add new type */}
+      <form onSubmit={handleAdd} className="flex items-center gap-2 mb-3">
+        <input
+          className="input flex-1"
+          value={newType}
+          onChange={(e) => setNewType(e.target.value)}
+          placeholder="Add a new job type..."
+        />
+        <button
+          type="submit"
+          disabled={!newType.trim() || saving}
+          className="btn-primary text-sm py-2 px-4 disabled:opacity-50"
+        >
+          Add
+        </button>
+      </form>
+
+      {/* Reset to defaults */}
+      <button
+        type="button"
+        onClick={handleReset}
+        className="text-sm text-gray-500 hover:text-turf-600 underline"
+      >
+        Reset to Defaults
       </button>
     </div>
   );

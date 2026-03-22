@@ -153,7 +153,7 @@ export default function SitePhotoSection({ jobId, clientId, photos, onPhotosChan
                 <div className="space-y-1.5">
                   <input
                     className="input text-xs"
-                    placeholder="Ask Glen AI to analyze this area..."
+                    placeholder="Ask Glen to analyze this area..."
                     value={aiPrompt}
                     onChange={(e) => setAiPrompt(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleAskAboutPhoto(photo)}
@@ -163,7 +163,7 @@ export default function SitePhotoSection({ jobId, clientId, photos, onPhotosChan
                       onClick={() => handleAskAboutPhoto(photo)}
                       className="btn-secondary text-xs flex-1 justify-center py-1.5"
                     >
-                      🤖 Ask AI
+                      🏞️ Ask Glen
                     </button>
                     {photo.aiAnalysis && !photo.aiAnalysis.error && (
                       <button

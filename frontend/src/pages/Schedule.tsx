@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { scheduleApi, jobsApi } from "../api";
-import type { Job, JobStatus } from "../types";
+import { scheduleApi, jobsApi, clientsApi, settingsApi } from "../api";
+import type { Job, JobStatus, Client } from "../types";
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -10,6 +10,13 @@ const START_HOUR = 6; // 6 AM
 const END_HOUR = 21; // 9 PM (last visible hour is 8 PM row)
 const TOTAL_HOURS = END_HOUR - START_HOUR;
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+const DEFAULT_JOB_TYPES = [
+  "Mow", "Fertilize", "Weed Control", "Aeration", "Overseeding",
+  "Spring Cleanup", "Fall Cleanup", "Mulch", "Hedge Trimming", "Edging",
+  "Leaf Removal", "Snow Removal", "Irrigation Check", "Tree Trimming",
+  "Garden Maintenance", "Landscape Design", "Hardscape", "Other",
+];
 
 const statusColors: Record<JobStatus, string> = {
   PENDING: "bg-yellow-100 text-yellow-700 border-yellow-200",
@@ -268,6 +275,229 @@ function JobPopout({
   );
 }
 
+// ── Create Job Popout Component ──────────────────────────────────────────────
+
+function CreateJobPopout({
+  date,
+  startHour,
+  topPx,
+  onClose,
+  onCreated,
+}: {
+  date: Date;
+  startHour: number;
+  topPx: number;
+  onClose: () => void;
+  onCreated: () => void;
+}) {
+  const popoutRef = useRef<HTMLDivElement>(null);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [clientId, setClientId] = useState("");
+  const [propertyId, setPropertyId] = useState("");
+  const [jobType, setJobType] = useState("");
+  const [customJobType, setCustomJobType] = useState("");
+  const [jobTypes, setJobTypes] = useState<string[]>(DEFAULT_JOB_TYPES);
+  const [duration, setDuration] = useState("60");
+  const [submitting, setSubmitting] = useState(false);
+
+  // Fetch clients and job types on mount
+  useEffect(() => {
+    clientsApi.list().then(setClients).catch(console.error);
+    settingsApi.getJobTypes().then((d) => setJobTypes(d.jobTypes)).catch(() => setJobTypes(DEFAULT_JOB_TYPES));
+  }, []);
+
+  // Close on Escape
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [onClose]);
+
+  // Close on click outside
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (popoutRef.current && !popoutRef.current.contains(e.target as Node)) {
+        onClose();
+      }
+    }
+    const timer = setTimeout(() => {
+      document.addEventListener("mousedown", handleClick);
+    }, 0);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("mousedown", handleClick);
+    };
+  }, [onClose]);
+
+  const selectedClient = clients.find((c) => c.id === clientId);
+  const properties = selectedClient?.properties ?? [];
+
+  // Reset property when client changes
+  useEffect(() => {
+    setPropertyId("");
+  }, [clientId]);
+
+  const resolvedJobType = jobType === "Other" ? customJobType : jobType;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!clientId || !resolvedJobType) return;
+
+    setSubmitting(true);
+    try {
+      const hours = Math.floor(startHour);
+      const minutes = Math.round((startHour - hours) * 60);
+      const scheduledStart = new Date(date);
+      scheduledStart.setHours(hours, minutes, 0, 0);
+
+      const durationMs = parseInt(duration) * 60_000;
+      const scheduledEnd = new Date(scheduledStart.getTime() + durationMs);
+
+      await jobsApi.create({
+        title: resolvedJobType,
+        clientId,
+        propertyId: propertyId || undefined,
+        scheduledStart: scheduledStart.toISOString(),
+        scheduledEnd: scheduledEnd.toISOString(),
+        status: "SCHEDULED",
+      });
+
+      onCreated();
+      onClose();
+    } catch (err) {
+      console.error("Failed to create job:", err);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Round the displayed time for the pre-filled label
+  const hours = Math.floor(startHour);
+  const minutes = Math.round((startHour - hours) * 60);
+  const displayDate = new Date(date);
+  displayDate.setHours(hours, minutes, 0, 0);
+
+  return (
+    <div
+      ref={popoutRef}
+      className="absolute z-50 bg-white rounded-lg shadow-xl border border-gray-200"
+      style={{ top: topPx, left: 4, width: 280 }}
+    >
+      <form onSubmit={handleSubmit} className="p-3 space-y-2">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-medium text-gray-500">
+            {displayDate.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}{" "}
+            at {formatTime(displayDate)}
+          </p>
+          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Client */}
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-0.5">Client</label>
+          <select
+            value={clientId}
+            onChange={(e) => setClientId(e.target.value)}
+            className="w-full text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:ring-1 focus:ring-turf-500 focus:border-turf-500"
+            required
+          >
+            <option value="">Select client...</option>
+            {clients.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.firstName} {c.lastName}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Property */}
+        {properties.length > 0 && (
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-0.5">Property</label>
+            <select
+              value={propertyId}
+              onChange={(e) => setPropertyId(e.target.value)}
+              className="w-full text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:ring-1 focus:ring-turf-500 focus:border-turf-500"
+            >
+              <option value="">Select property...</option>
+              {properties.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.streetAddress}, {p.city}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Job Type */}
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-0.5">Job Type</label>
+          <select
+            value={jobType}
+            onChange={(e) => setJobType(e.target.value)}
+            className="w-full text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:ring-1 focus:ring-turf-500 focus:border-turf-500"
+            required
+          >
+            <option value="">Select type...</option>
+            {jobTypes.map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+            {!jobTypes.includes("Other") && <option value="Other">Other</option>}
+          </select>
+          {jobType === "Other" && (
+            <input
+              type="text"
+              value={customJobType}
+              onChange={(e) => setCustomJobType(e.target.value)}
+              placeholder="Enter custom job type..."
+              className="w-full text-sm border border-gray-300 rounded-md px-2 py-1.5 mt-1 focus:ring-1 focus:ring-turf-500 focus:border-turf-500"
+              required
+            />
+          )}
+        </div>
+
+        {/* Duration */}
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-0.5">Duration</label>
+          <select
+            value={duration}
+            onChange={(e) => setDuration(e.target.value)}
+            className="w-full text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:ring-1 focus:ring-turf-500 focus:border-turf-500"
+          >
+            <option value="30">30 min</option>
+            <option value="60">1 hr</option>
+            <option value="90">1.5 hr</option>
+            <option value="120">2 hr</option>
+            <option value="180">3 hr</option>
+            <option value="240">4 hr</option>
+          </select>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-2 pt-1">
+          <button
+            type="submit"
+            disabled={submitting || !clientId || !resolvedJobType}
+            className="btn-primary text-xs py-1.5 px-3 disabled:opacity-50"
+          >
+            {submitting ? "Creating..." : "Create Job"}
+          </button>
+          <button type="button" onClick={onClose} className="text-xs text-gray-500 hover:text-gray-700">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 // ── Component ────────────────────────────────────────────────────────────────
 
 export default function Schedule() {
@@ -281,6 +511,14 @@ export default function Schedule() {
   // Popout state
   const [popoutJob, setPopoutJob] = useState<Job | null>(null);
   const [popoutAnchor, setPopoutAnchor] = useState<DOMRect | null>(null);
+
+  // Create-job popout state
+  const [createPopout, setCreatePopout] = useState<{
+    date: Date;
+    startHour: number;
+    topPx: number;
+    dayIdx: number;
+  } | null>(null);
 
   // Fetch jobs for the visible week
   useEffect(() => {
@@ -346,6 +584,42 @@ export default function Schedule() {
     },
     [weekStart, handleClosePopout],
   );
+
+  const handleDayDoubleClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>, dayIdx: number, day: Date) => {
+      // Only trigger on direct clicks on the day column, not on job cards
+      if ((e.target as HTMLElement).closest("[data-job-card]")) return;
+
+      const rect = e.currentTarget.getBoundingClientRect();
+      const offsetY = e.clientY - rect.top;
+      const rawHour = START_HOUR + offsetY / HOUR_HEIGHT;
+      // Round to nearest 15 min
+      const rounded = Math.round(rawHour * 4) / 4;
+      const clampedHour = Math.max(START_HOUR, Math.min(END_HOUR - 0.25, rounded));
+
+      // Close any existing job popout
+      handleClosePopout();
+
+      setCreatePopout({
+        date: day,
+        startHour: clampedHour,
+        topPx: (clampedHour - START_HOUR) * HOUR_HEIGHT,
+        dayIdx,
+      });
+    },
+    [handleClosePopout],
+  );
+
+  const handleCloseCreatePopout = useCallback(() => {
+    setCreatePopout(null);
+  }, []);
+
+  const handleJobCreated = useCallback(async () => {
+    const end = new Date(weekStart);
+    end.setDate(end.getDate() + 7);
+    const updated = await scheduleApi.get(weekStart, end);
+    setJobs(updated);
+  }, [weekStart]);
 
   const days = getWeekDays(weekStart);
   const weekEnd = new Date(weekStart);
@@ -462,6 +736,7 @@ export default function Schedule() {
               return (
                 <div
                   key={dayIdx}
+                  onDoubleClick={(e) => handleDayDoubleClick(e, dayIdx, day)}
                   className={`relative border-r border-gray-100 last:border-r-0 ${
                     isToday ? "bg-turf-50/20" : ""
                   }`}
@@ -521,6 +796,7 @@ export default function Schedule() {
                     return (
                       <div
                         key={job.id}
+                        data-job-card
                         onClick={(e) => handleJobClick(e, job)}
                         className={`absolute left-1 right-1 z-10 rounded-md px-2 py-1 text-xs border overflow-hidden cursor-pointer hover:shadow-md transition-shadow ${statusColors[job.status]}`}
                         style={{ top, height }}
@@ -535,6 +811,17 @@ export default function Schedule() {
                       </div>
                     );
                   })}
+
+                  {/* Create job popout */}
+                  {createPopout && createPopout.dayIdx === dayIdx && (
+                    <CreateJobPopout
+                      date={createPopout.date}
+                      startHour={createPopout.startHour}
+                      topPx={createPopout.topPx}
+                      onClose={handleCloseCreatePopout}
+                      onCreated={handleJobCreated}
+                    />
+                  )}
                 </div>
               );
             })}

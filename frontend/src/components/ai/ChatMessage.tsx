@@ -30,7 +30,7 @@ export default function ChatMessage({ message, conversationId, onEntityAction, o
     <div className={`flex ${isUser ? "justify-end" : "justify-start"} mb-3`}>
       {!isUser && (
         <div className="w-7 h-7 bg-turf-100 rounded-full flex items-center justify-center text-sm shrink-0 mr-2 mt-0.5">
-          🤖
+          🏞️
         </div>
       )}
       <div className={`max-w-[85%] ${isUser ? "" : ""}`}>

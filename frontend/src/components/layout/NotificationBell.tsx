@@ -4,7 +4,7 @@ import { notificationsApi } from "../../api";
 import type { Notification, NotificationType } from "../../types";
 
 const TYPE_ICONS: Record<NotificationType, string> = {
-  AGENT_ACTION: "\uD83E\uDD16",
+  AGENT_ACTION: "🏞️",
   OVERDUE_INVOICE: "\uD83D\uDCB8",
   WEATHER_ALERT: "\uD83C\uDF27\uFE0F",
   JOB_REMINDER: "\uD83D\uDCC5",

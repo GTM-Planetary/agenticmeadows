@@ -244,7 +244,7 @@ export default function Dashboard() {
 
       {/* AI tip */}
       <div className="bg-turf-50 border border-turf-200 rounded-xl p-4 flex items-start gap-3">
-        <span className="text-2xl">{"\uD83E\uDD16"}</span>
+        <span className="text-2xl">{"🏞️"}</span>
         <div>
           <p className="font-semibold text-turf-800 text-sm">AgenticMeadows is ready</p>
           <p className="text-turf-700 text-sm mt-0.5">

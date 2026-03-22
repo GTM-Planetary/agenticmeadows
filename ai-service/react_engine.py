@@ -339,7 +339,7 @@ def _build_system_prompt(context: Optional[dict] = None) -> str:
                 + "\nUse these IDs when relevant instead of asking the user for them."
             )
 
-    return f"""You are Glen AI, the intelligent assistant built into AgenticMeadows, a landscaping field service management platform. You help manage clients, jobs, quotes, invoices, properties, chemical applications, scheduling, and weather planning.
+    return f"""You are Glen, the intelligent assistant built into AgenticMeadows, a landscaping field service management platform. You help manage clients, jobs, quotes, invoices, properties, chemical applications, scheduling, and weather planning.
 
 Current date/time: {now}
 {context_section}

@@ -1,196 +1,213 @@
-# 🌿 AgenticMeadows
-
-**Open-source, locally-runnable landscaping field service management platform.**
-Think Jobber, but every workflow is powered by a local AI agent running on your own hardware — no cloud, no subscriptions.
-
----
-
-## What Makes It Different
-
-**Agentic & Vision by Design.** Every module is wired to a local AI assistant powered by **Qwen 3.5** (via Ollama). Because Qwen 3.5 is natively multimodal, the AI handles both:
-- **Text tasks** — reading context, drafting quotes, checking the schedule
-- **Vision tasks** — analyzing job site photos to identify work needed and suggest pricing
-
-**NVIDIA NeMo Guardrails** enforces policy-based safety: the AI stays in scope, resists prompt injection, and never executes write operations without user confirmation.
+<div align="center">
+  <img src="frontend/public/am-icon.png" alt="AgenticMeadows" width="120" />
+  <h1>AgenticMeadows</h1>
+  <p><strong>AI-Powered Landscaping Field Service Management</strong></p>
+  <p>100% local &middot; No cloud required &middot; No subscriptions</p>
+  <br />
+  <a href="#one-command-install">Quick Install</a> &middot;
+  <a href="#features">Features</a> &middot;
+  <a href="#architecture">Architecture</a> &middot;
+  <a href="#contributing">Contributing</a>
+</div>
 
 ---
 
-## Tech Stack
+## What is AgenticMeadows?
 
-| Layer | Technology |
-|---|---|
-| Frontend | React 18 + Vite + TypeScript + TailwindCSS |
-| Backend | Node.js + Express + Prisma ORM |
-| AI Service | Python FastAPI + NeMo Guardrails |
-| Local LLM | Ollama running `qwen2.5` (auto-sized by RAM) |
-| Database | PostgreSQL 16 |
-| Deployment | Docker Compose |
+AgenticMeadows is an open-source, AI-first field service management platform built specifically for landscaping businesses. It replaces expensive SaaS tools like Jobber and HousecallPro with a locally-hosted platform that runs entirely on your hardware.
+
+**Glen**, your AI assistant, can manage your entire business through natural conversation — create clients, schedule jobs, draft quotes, analyze lawn health, and more.
+
+---
+
+## One-Command Install
+
+### macOS / Linux / WSL
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/GTM-Planetary/agenticmeadows/main/install.sh | bash
+```
+
+### Manual Install (if you already have Docker)
+
+```bash
+git clone https://github.com/GTM-Planetary/agenticmeadows.git
+cd agenticmeadows
+docker compose up -d
+# Open http://localhost:3001
+```
+
+### Start / Stop / Update
+
+```bash
+./start.sh   # Start the app (opens browser)
+./stop.sh    # Stop all services (data preserved)
+./update.sh  # Pull latest + rebuild + restart
+```
+
+---
+
+## Features
+
+### Glen AI Assistant
+
+- Natural language CRM management — "Create a client: Jose Nunez, 208-555-1234"
+- Slash commands (`/new-client`, `/schedule`, `/weather`, `/lawn-check`)
+- Interactive entity cards with inline editing
+- Batch actions — handle multiple operations in one message
+- Fuzzy address matching — "Show me the Geneva Pl property"
+- Lawn health diagnostics from built-in knowledge base
+- Treatment recommendations with chemical, organic, and cultural options
+
+### Client & Property Management
+
+- Full CRM with clients, properties, and contact info
+- Property measurements (lot size, lawn area, bed area, edging)
+- Chemical application tracking with re-entry compliance
+- Property health scoring and predictive maintenance
+
+### Scheduling
+
+- Google Calendar-style week view with 24-hour time grid
+- Double-click to create jobs directly on the schedule
+- Click job cards for detail popout with quick actions
+- Configurable job types (Mow, Fertilize, Aeration, etc.)
+
+### Quoting & Invoicing
+
+- Service catalog with configurable pricing (flat, per sqft, per hour)
+- Quote builder with service dropdown auto-fill
+- Quote workflow: Draft &rarr; Sent &rarr; Approved &rarr; Convert to Invoice
+- Invoice customization with company branding
+- PDF and CSV export
+
+### Reports & Analytics
+
+- Revenue reports (by month, client, service type)
+- Job completion metrics and productivity tracking
+- Client revenue rankings and sales pipeline funnel
+- Invoice aging report
+- Chemical application compliance log
+- CSV and PDF export
+
+### Predictive Maintenance
+
+- Equipment fleet tracking (mowers, trimmers, vehicles, trailers)
+- Maintenance scheduling with automatic alerts
+- Service logging with cost tracking
+- Repair vs. replace analysis
+- Property health assessments with predicted service needs
+
+### Settings & Administration
+
+- Organization settings (company name, logo, address)
+- User management with roles (Admin, Technician, Viewer)
+- Invite links for easy team onboarding
+- Configurable job types
+- Custom fields and sections
+- API key management for external integrations
+- AI Agent configuration (model, tools, skills)
+
+### Security
+
+- NemoClaw sandbox for AI agent isolation
+- NeMo Guardrails for jailbreak/injection detection
+- PendingAction pattern — AI proposes, human confirms all writes
+- All data stays on your hardware
 
 ---
 
 ## Architecture
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│                     Docker Compose Stack                      │
-│                                                              │
-│  ┌────────────┐    ┌────────────┐    ┌──────────────────┐   │
-│  │  Frontend  │───▶│  Backend   │───▶│   PostgreSQL 16  │   │
-│  │ React/Vite │    │ Node/Prism │    │                  │   │
-│  │  Port 3001 │    │  Port 4000 │    │    Port 5433     │   │
-│  └─────┬──────┘    └─────┬──────┘    └──────────────────┘   │
-│        │                 │                                    │
-│        ▼                 ▼                                    │
-│  ┌──────────────────────────┐    ┌────────────────────────┐  │
-│  │      AI Service          │───▶│        Ollama          │  │
-│  │   FastAPI + NeMo Rails   │    │    Qwen 3.5 (local)    │  │
-│  │        Port 8000         │    │       Port 11435       │  │
-│  └──────────────────────────┘    └────────────────────────┘  │
-│                                                              │
-│  Shared Volume: photos_volume (/app/photos)                  │
-│  Backend saves uploads → AI Service reads for vision         │
-└──────────────────────────────────────────────────────────────┘
+Frontend (React/Vite/Nginx)  ──▶  Backend (Express/Prisma)  ──▶  PostgreSQL 16
+       Port 3001                       Port 4000                    Port 5433
+           │                               │
+           ▼                               ▼
+   AI Service (FastAPI)  ──────▶  Ollama (Qwen 3.5)
+   ReAct Agent Engine              Local LLM
+       Port 8000                    Port 11435
 ```
 
----
+**Tech Stack:**
 
-## Prerequisites
-
-| Requirement | Notes |
-|---|---|
-| Docker Desktop | Version 24+ recommended |
-| RAM | 4GB minimum · 8GB+ for better AI quality |
-| Storage | ~10GB for Docker images + model weights |
-| OS | macOS, Linux, or Windows (WSL2) |
-
-**Qwen 3.5 model auto-selection by RAM:**
-| Your RAM | Model Used | Quality |
-|---|---|---|
-| 32GB+ | `qwen3.5:27b` | Excellent |
-| 16-31GB | `qwen3.5:9b` | Great |
-| 8-15GB | `qwen3.5:4b` | Good |
-| 4-7GB | `qwen3.5:2b` | Decent |
-| <4GB | `qwen3.5:0.8b` | Basic |
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 18, Vite, TypeScript, TailwindCSS |
+| Backend | Node.js, Express, Prisma ORM |
+| AI Service | Python, FastAPI, ReAct Agent Engine |
+| LLM | Qwen 3.5 via Ollama (auto-selects model size) |
+| Database | PostgreSQL 16 |
+| Security | NemoClaw + NeMo Guardrails |
+| Agent | OpenClaw with 23 MCP tools |
 
 ---
 
-## Quick Start
+## System Requirements
 
-```bash
-# 1. Clone the repository
-git clone https://github.com/your-org/agenticmeadows.git
-cd agenticmeadows
+| Component | Minimum | Recommended |
+|-----------|---------|-------------|
+| RAM | 4 GB | 16 GB+ |
+| Storage | 10 GB | 20 GB+ |
+| Docker | 24.0+ | Latest |
+| OS | macOS, Linux, Windows (WSL2) | macOS Apple Silicon |
 
-# 2. Copy environment file (defaults work out of the box)
-cp .env.example .env
+The AI model auto-selects based on available RAM:
 
-# 3. Start everything — grab a coffee, first run downloads the AI model
-docker-compose up -d
-
-# 4. Open the app
-open http://localhost:3001
-
-# Default login: admin@turf.local / password123
-```
-
-That's it. One command.
+| RAM | Model | Quality |
+|-----|-------|---------|
+| < 4 GB | Qwen 3.5 0.8B | Basic |
+| 4-8 GB | Qwen 3.5 2B | Good |
+| 8-16 GB | Qwen 3.5 4B | Great |
+| 16-32 GB | Qwen 3.5 9B | Excellent |
+| 32 GB+ | Qwen 3.5 27B | Best |
 
 ---
 
-## How the Vision AI Works
+## Optional: NVIDIA Cloud Enhancement
 
-1. **Open a Job** → navigate to any job detail page
-2. **Upload a photo** → click "Upload Photo", select Before/After/Mapping Idea, pick a file
-3. **Ask the AI** → type a prompt like "What work is needed here and what should I charge?"
-4. **Qwen 3.5 analyzes** → the photo is sent to the locally-running multimodal model via Ollama's vision API
-5. **Review the analysis** → AI describes what it sees (sq footage, plant conditions, specific services needed) and estimates costs
-6. **Draft a Quote** → click "Draft Quote from Analysis" — the AI prepares a quote with line items
-7. **Confirm** → review the quote in the chat panel, click Confirm — it's created in the system
+For better AI responses, add a free NVIDIA API key from [build.nvidia.com](https://build.nvidia.com):
 
-The AI **never** executes write operations without your confirmation. Every proposed action appears as a confirmation card.
+1. Go to build.nvidia.com and sign in
+2. Search for **Nemotron** and click "Get API Key"
+3. In AgenticMeadows: Settings &rarr; Integrations &rarr; paste key &rarr; Save
+
+The AI will use Nemotron cloud for better responses and fall back to local Ollama when offline.
 
 ---
 
-## Project Structure
+## Contributing
 
-```
-agenticmeadows/
-├── docker-compose.yml          # Orchestration (start everything here)
-├── .env.example                # Copy to .env
-├── frontend/                   # React + Vite + TailwindCSS
-│   └── src/
-│       ├── components/
-│       │   ├── layout/         # Sidebar, TopBar, AIChatPanel
-│       │   ├── jobs/           # SitePhotoSection (photo upload + AI)
-│       │   └── ai/             # ChatMessage, PendingActionCard
-│       └── pages/              # Dashboard, Clients, Schedule, Jobs, Quotes, Invoices
-├── backend/                    # Node.js + Express + Prisma
-│   └── src/
-│       ├── routes/             # REST API routes
-│       ├── controllers/        # Business logic
-│       ├── middleware/         # JWT auth, error handling
-│       └── prisma/             # schema.prisma + migrations
-├── ai-service/                 # Python FastAPI + NeMo Guardrails
-│   ├── main.py                 # Chat & confirm-action endpoints
-│   ├── guardrails/             # NeMo config, prompts, Colang flows
-│   └── tools/                 # Vision, quote, schedule, client tools
-└── postgres/
-    └── init.sql                # Schema constraints + seed data
-```
+We welcome contributions!
 
----
-
-## API Reference
-
-### Backend (port 4000)
-
-| Method | Path | Description |
-|---|---|---|
-| POST | `/api/auth/login` | Sign in, get JWT |
-| POST | `/api/auth/register` | Create account |
-| GET | `/api/clients` | List clients (supports `?search=`) |
-| POST | `/api/clients` | Create client (with nested properties) |
-| GET | `/api/jobs` | List jobs (supports `?status=&clientId=`) |
-| POST | `/api/jobs/:id/photos` | Upload job site photo (multipart) |
-| GET | `/api/schedule?start=&end=` | Jobs in date range |
-| POST | `/api/quotes/:id/convert` | Convert approved quote to invoice |
-
-### AI Service (port 8000)
-
-| Method | Path | Description |
-|---|---|---|
-| POST | `/ai/chat` | Send message, optionally with image URL |
-| POST | `/ai/confirm-action` | Execute a pending action after confirmation |
-| DELETE | `/ai/pending-action/:id` | Cancel a pending action |
-| GET | `/health` | Check AI service + model status |
-
----
-
-## Development
-
-```bash
-# Run just the database and backend in dev mode
-docker-compose up -d db backend
-
-# Run frontend outside Docker (hot reload)
-cd frontend && npm install && npm run dev
-
-# View backend logs
-docker-compose logs -f backend
-
-# Check which Ollama model was selected
-docker-compose logs ollama-init
-
-# Prisma Studio (DB GUI)
-docker-compose exec backend npx prisma studio
-```
+1. Fork the repo
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ---
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) for details.
+Apache 2.0 — see [LICENSE](LICENSE) for details.
 
 ---
 
-*Built with Qwen 3.5 · NeMo Guardrails · Ollama · No cloud dependencies*
+## AgenticMeadows Cloud
+
+Coming soon — managed hosting with premium integrations:
+
+- QuickBooks Online sync
+- Stripe payment processing
+- SMS & email notifications (Twilio)
+- Google Calendar integration
+- Fine-tuned AI models for landscaping
+- Team GPS tracking
+
+---
+
+<div align="center">
+  <p>Built by <a href="https://github.com/GTM-Planetary">GTM Planetary</a></p>
+  <p>Powered by Qwen 3.5 &middot; OpenClaw &middot; NemoClaw</p>
+</div>

@@ -50,15 +50,13 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-turf-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-am-bg flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-turf-500 rounded-2xl mb-4 text-3xl">
-            🌿
-          </div>
-          <h1 className="text-2xl font-bold text-white">AgenticMeadows</h1>
-          <p className="text-turf-400 text-sm mt-1">Landscaping Field Service Management</p>
+          <img src="/am-icon.png" alt="AgenticMeadows" className="w-20 h-20 mx-auto mb-4 rounded-2xl" />
+          <h1 className="text-2xl font-bold text-am-text-primary">AgenticMeadows</h1>
+          <p className="text-am-green-mid text-sm mt-1">Landscaping Field Service Management</p>
         </div>
 
         <div className="card p-6">
@@ -104,7 +102,7 @@ export default function Login() {
           </form>
         </div>
 
-        <p className="text-turf-600 text-xs text-center mt-4">
+        <p className="text-am-green-mid text-xs text-center mt-4">
           100% local &middot; No cloud &middot; No subscriptions
         </p>
       </div>

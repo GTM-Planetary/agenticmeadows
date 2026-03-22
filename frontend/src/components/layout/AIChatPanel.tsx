@@ -171,7 +171,7 @@ export default function AIChatPanel({ isOpen, onClose, clientId, jobId, prefillM
       {
         id: "welcome",
         role: "assistant",
-        content: "Hi! I'm Glen AI. I can help with scheduling, quotes, and job site analysis.\n\nUpload a photo on a job page, or just ask me anything!",
+        content: "Hi! I'm Glen. I can help with scheduling, quotes, and job site analysis.\n\nUpload a photo on a job page, or just ask me anything!",
         timestamp: new Date().toISOString(),
       },
     ],
@@ -450,9 +450,9 @@ export default function AIChatPanel({ isOpen, onClose, clientId, jobId, prefillM
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3.5 bg-white border-b border-gray-200 shrink-0">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-turf-100 rounded-full flex items-center justify-center">🤖</div>
+            <div className="w-7 h-7 bg-turf-100 rounded-full flex items-center justify-center">🏞️</div>
             <div>
-              <p className="text-sm font-semibold text-gray-900">Glen AI</p>
+              <p className="text-sm font-semibold text-gray-900">Glen</p>
               <p className="text-xs text-turf-600">by AgenticMeadows · Qwen 3.5 · Local</p>
             </div>
           </div>
@@ -497,7 +497,7 @@ export default function AIChatPanel({ isOpen, onClose, clientId, jobId, prefillM
           {/* Loading indicator */}
           {state.isLoading && (
             <div className="flex justify-start mb-3">
-              <div className="w-7 h-7 bg-turf-100 rounded-full flex items-center justify-center text-sm shrink-0 mr-2">🤖</div>
+              <div className="w-7 h-7 bg-turf-100 rounded-full flex items-center justify-center text-sm shrink-0 mr-2">🏞️</div>
               <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-sm px-3.5 py-2.5 shadow-sm">
                 <div className="flex gap-1 items-center h-4">
                   <span className="w-1.5 h-1.5 bg-turf-400 rounded-full animate-bounce [animation-delay:0ms]" />
@@ -591,7 +591,7 @@ export default function AIChatPanel({ isOpen, onClose, clientId, jobId, prefillM
                 }
               }}
               onKeyDown={handleKeyDown}
-              placeholder="Ask Glen AI..."
+              placeholder="Ask Glen..."
               rows={1}
               disabled={state.isLoading}
               className="flex-1 input resize-none min-h-[38px] max-h-24 leading-snug py-2 text-sm"
